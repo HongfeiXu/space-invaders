@@ -1,19 +1,23 @@
 const path = require('path');
 
-module.exports = {
-    mode: 'production',
-    entry: './src/index.js',
-    output: {
-        filename: 'main.js',
-        path: path.resolve(__dirname, 'dist'),
-        publicPath: '/space-invaders/',
-    },
-    devServer: {
-        static: {
-            directory: path.join(__dirname, 'public'),
+module.exports = (_env, argv) => {
+    const isProduction = argv.mode === 'production';
+
+    return {
+        mode: argv.mode || 'development',
+        entry: './src/index.js',
+        output: {
+            filename: 'main.js',
+            path: path.resolve(__dirname, 'dist'),
+            publicPath: isProduction ? '/space-invaders/' : '/',
         },
-        compress: true,
-        port: 8080,
-        open: true,
-    },
+        devServer: {
+            static: {
+                directory: path.join(__dirname, 'public'),
+            },
+            compress: true,
+            port: 8080,
+            open: true,
+        },
+    };
 };

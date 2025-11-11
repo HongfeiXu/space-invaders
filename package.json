@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "webpack serve",
-    "build": "webpack",
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
     "deploy": "npm run build && echo 'Ready to push to GitHub'"
   },
   "keywords": [],
