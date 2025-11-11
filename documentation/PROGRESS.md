@@ -150,8 +150,151 @@ FPS：60 稳定
 ✅ Git 仓库初始化 (3 commits)
 ✅ .gitignore 配置
 ✅ DEPLOYMENT.md 完成
-⏳ 待推送 GitHub
+✅ 推送到 GitHub
 
 ---
 
-*创建日期: 2025-11-11*
+## 会话 2 - GitHub Pages 部署 + 构建优化
+
+**时间**: 2025-11-12
+**成果**: 完整的 GitHub Pages 部署方案 + Webpack 自动化
+
+### 主要工作
+
+| 任务 | 耗时 | 状态 | 提交 |
+|------|------|------|------|
+| GitHub Pages 404 问题排查 | 30min | ✅ | 多个 |
+| HtmlWebpackPlugin 集成 | 15min | ✅ | 817b554 |
+| 项目结构重组（docs/documentation） | 10min | ✅ | d1a2098 |
+| 修复脚本双加载问题 | 5min | ✅ | 6c139f2 |
+| 文档编写（部署指南 + Webpack配置） | 30min | ✅ | 36779d6, 2ec6481 |
+
+**总计**: ~1.5 小时部署优化
+
+### 遇到的问题和解决
+
+| 问题 | 原因 | 解决方案 | 文档 |
+|------|------|--------|------|
+| GitHub Pages 404 错误 | 缺少 index.html | 集成 HtmlWebpackPlugin 自动生成 | DEPLOYMENT_ISSUES.md |
+| /dist 选项不可见 | GitHub Pages 只支持 / 或 /docs | 项目重组：dist → docs | DEPLOYMENT_ISSUES.md |
+| GitHub Actions 未运行 | 权限/配置问题 | 改为直接推送 /docs 文件夹 | DEPLOYMENT_ISSUES.md |
+| 游戏出现两架飞机 | 脚本加载两次 | 移除 HTML 中的手动 script 标签 | 6c139f2 |
+
+### 新增内容
+
+**项目结构变化**：
+```
+docs/              ← 构建输出（GitHub Pages 部署源）
+documentation/    ← 项目文档（原 docs/ 文件夹）
+  ├── README.md
+  ├── GUIDE.md
+  ├── PROGRESS.md
+  ├── DEPLOYMENT_ISSUES.md (新)
+  └── WEBPACK_CONFIG.md (新)
+src/
+public/index.html
+webpack.config.js  (更新)
+```
+
+**Webpack 配置优化**：
+- ✅ 集成 HtmlWebpackPlugin
+- ✅ 自动生成 HTML（无需手动复制）
+- ✅ 生产环境 HTML 自动压缩
+- ✅ 脚本自动注入和依赖管理
+
+**部署方案定型**：
+```
+Source: Deploy from a branch
+Branch: main
+Folder: /docs
+```
+游戏在线地址：https://hongfeixu.github.io/space-invaders/
+
+### 部署问题排查过程
+
+**第 1 阶段**：GitHub Actions 未自动运行
+- 尝试等待自动部署 → 失败
+- 改为手动构建 `npm run build`
+
+**第 2 阶段**：404 错误
+- 原因：Webpack 只生成 main.js，缺少 index.html
+- 临时方案：`cp public/index.html docs/`
+- 长期方案：集成 HtmlWebpackPlugin
+
+**第 3 阶段**：GitHub Pages 文件夹选择
+- 问题：下拉框只显示 `/ (root)` 和 `None`，看不到 `/dist`
+- 原因：GitHub Pages 只支持两种位置
+- 解决：将 dist/ 重命名为 docs/（GitHub 的标准位置）
+
+**第 4 阶段**：脚本双加载
+- 问题：游戏出现两架飞机
+- 原因：public/index.html 中有 `<script>`，HtmlWebpackPlugin 又注入了一个
+- 修复：从 HTML 模板中移除手动脚本标签
+
+### 代码质量改进
+
+| 项 | 之前 | 之后 | 备注 |
+|------|------|------|------|
+| HTML 生成 | 手动复制 | 自动生成 | HtmlWebpackPlugin |
+| 构建流程 | 多步骤 | 单命令 | `npm run build` |
+| 模板同步 | 易遗漏 | 自动同步 | 模板变更自动反映 |
+| HTML 压缩 | 无 | 生产环境启用 | 减小部署文件体积 |
+
+### 文档改进
+
+**新增文档**：
+1. **DEPLOYMENT_ISSUES.md** - 完整的部署问题排查指南
+   - 三个关键问题的深入分析
+   - 长期/短期解决方案
+   - 部署方案对比表
+
+2. **WEBPACK_CONFIG.md** - Webpack 配置详解
+   - HtmlWebpackPlugin 原理
+   - 工作流程图
+   - 常见场景示例
+   - 性能优化建议
+
+### 项目现状
+
+**部署状态**：
+- ✅ 游戏已上线：https://hongfeixu.github.io/space-invaders/
+- ✅ GitHub Pages 配置完成
+- ✅ 自动化构建流程就绪
+- ✅ 所有文件已提交
+
+**代码统计**：
+```
+游戏逻辑：210 行 (GameScene.js)
+配置：24 行 (webpack.config.js)
+HTML 模板：30 行 (public/index.html)
+依赖：5 个 (phaser, webpack, webpack-cli, webpack-dev-server, html-webpack-plugin)
+```
+
+**Git 统计**：
+```
+总 commits：15+
+当前状态：clean (无未提交文件)
+远程：origin/main (最新)
+```
+
+### 下一步优化方向
+
+**高优先级**（可选）：
+1. 使用 CopyPlugin 自动复制静态资源
+2. 添加 source map 支持（调试用）
+3. 配置 ESLint 代码质量检查
+
+**中优先级**（游戏功能）：
+1. 提取配置到 GameConfig.js
+2. 实现物体池优化
+3. 添加难度递增机制
+
+**低优先级**：
+1. 高分记录（localStorage）
+2. 响应式设计适配
+3. 离线支持（Service Worker）
+
+---
+
+*会话 2 更新: 2025-11-12*
+*首次部署上线完成*
