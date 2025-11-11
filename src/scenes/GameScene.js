@@ -13,6 +13,7 @@ class GameScene extends Phaser.Scene {
         this.score = 0;
         this.lives = 3;
         this.gameOver = false;
+        this.isPaused = false;
 
         // 创建UI文本
         this.scoreText = this.add.text(10, 10, 'Score: 0', {
@@ -48,6 +49,19 @@ class GameScene extends Phaser.Scene {
         // 输入控制
         this.cursors = this.input.keyboard.createCursorKeys();
         this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+
+        // ESC 键暂停游戏
+        this.input.keyboard.on('keydown-ESC', () => {
+            this.togglePause();
+        });
+
+        // 暂停提示文本
+        this.pauseText = this.add.text(400, 300, 'PAUSED\n\nPress ESC to Resume', {
+            fontSize: '40px',
+            fill: '#fff',
+            align: 'center'
+        }).setOrigin(0.5).setVisible(false);
 
         // 敌人射击定时器
         this.time.addEvent({
@@ -58,8 +72,22 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    update() {
+    togglePause() {
         if (this.gameOver) return;
+
+        this.isPaused = !this.isPaused;
+
+        if (this.isPaused) {
+            this.physics.pause();
+            this.pauseText.setVisible(true);
+        } else {
+            this.physics.resume();
+            this.pauseText.setVisible(false);
+        }
+    }
+
+    update() {
+        if (this.gameOver || this.isPaused) return;
 
         // 玩家移动控制
         if (this.cursors.left.isDown) {
