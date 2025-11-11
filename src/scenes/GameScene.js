@@ -1,4 +1,5 @@
 const Phaser = require('phaser');
+const GameConfig = require('../config/GameConfig');
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -11,7 +12,7 @@ class GameScene extends Phaser.Scene {
 
         // 初始化游戏变量
         this.score = 0;
-        this.lives = 3;
+        this.lives = GameConfig.GAME.INITIAL_LIVES;
         this.gameOver = false;
         this.isPaused = false;
 
@@ -21,13 +22,13 @@ class GameScene extends Phaser.Scene {
             fill: '#fff'
         });
 
-        this.livesText = this.add.text(this.cameras.main.width - 150, 10, 'Lives: 3', {
+        this.livesText = this.add.text(this.cameras.main.width - 150, 10, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
             fontSize: '20px',
             fill: '#fff'
         });
 
         // 创建玩家飞船
-        this.player = this.physics.add.sprite(400, 550, 'player');
+        this.player = this.physics.add.sprite(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y, 'player');
         this.player.setCollideWorldBounds(true);
         this.player.setDrag(0.99);
 
@@ -65,7 +66,7 @@ class GameScene extends Phaser.Scene {
 
         // 敌人射击定时器
         this.time.addEvent({
-            delay: 1000,
+            delay: GameConfig.ENEMY.FIRE_INTERVAL,
             callback: this.enemyShoot,
             callbackScope: this,
             loop: true
@@ -91,9 +92,9 @@ class GameScene extends Phaser.Scene {
 
         // 玩家移动控制
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-250);
+            this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
         } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(250);
+            this.player.setVelocityX(GameConfig.PLAYER.SPEED);
         } else {
             this.player.setVelocityX(0);
         }
@@ -123,19 +124,14 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnEnemies() {
-        const rows = 3;
-        const cols = 5;
-        const spacingX = 80;
-        const spacingY = 60;
-        const startX = 100;
-        const startY = 50;
+        const config = GameConfig.ENEMY_SPAWN;
 
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                const x = startX + col * spacingX;
-                const y = startY + row * spacingY;
+        for (let row = 0; row < config.ROWS; row++) {
+            for (let col = 0; col < config.COLS; col++) {
+                const x = config.START_X + col * config.SPACING_X;
+                const y = config.START_Y + row * config.SPACING_Y;
                 const enemy = this.enemies.create(x, y, 'enemy');
-                enemy.setVelocityX(Phaser.Math.Between(-50, 50));
+                enemy.setVelocityX(Phaser.Math.Between(GameConfig.ENEMY.SPEED_MIN, GameConfig.ENEMY.SPEED_MAX));
                 enemy.setBounce(1, 1);
                 enemy.setCollideWorldBounds(true);
             }
@@ -149,9 +145,9 @@ class GameScene extends Phaser.Scene {
         }
 
         const currentTime = this.time.now;
-        if (currentTime - this.lastShotTime > 250) {
+        if (currentTime - this.lastShotTime > GameConfig.PLAYER.SHOOT_COOLDOWN) {
             const bullet = this.playerBullets.create(this.player.x, this.player.y - 10, 'playerBullet');
-            bullet.setVelocityY(-400);
+            bullet.setVelocityY(-GameConfig.PLAYER.BULLET_SPEED);
             this.lastShotTime = currentTime;
         }
     }
@@ -161,7 +157,7 @@ class GameScene extends Phaser.Scene {
 
         const randomEnemy = Phaser.Utils.Array.GetRandom(this.enemies.children.entries);
         const bullet = this.enemyBullets.create(randomEnemy.x, randomEnemy.y + 10, 'enemyBullet');
-        bullet.setVelocityY(200);
+        bullet.setVelocityY(GameConfig.ENEMY.BULLET_SPEED);
     }
 
     hitEnemy(bullet, enemy) {
@@ -170,16 +166,16 @@ class GameScene extends Phaser.Scene {
         // 敌人被击中闪烁效果
         this.tweens.add({
             targets: enemy,
-            alpha: 0.3,           // 透明度变为 0.3
-            duration: 80,         // 80ms
-            yoyo: true,           // 往返（闪烁）
-            repeat: 3,            // 重复 3 次
+            alpha: GameConfig.EFFECTS.BLINK_ALPHA,
+            duration: GameConfig.EFFECTS.BLINK_DURATION,
+            yoyo: true,
+            repeat: GameConfig.EFFECTS.BLINK_REPEAT,
             onComplete: () => {
-                enemy.destroy();  // 闪烁完后消灭敌人
+                enemy.destroy();
             }
         });
 
-        this.score += 10;
+        this.score += GameConfig.GAME.POINTS_PER_ENEMY;
         this.scoreText.setText('Score: ' + this.score);
     }
 
@@ -194,7 +190,7 @@ class GameScene extends Phaser.Scene {
                 this.endGame();
             } else {
                 // 重置玩家位置
-                player.setPosition(400, 550);
+                player.setPosition(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y);
                 player.setVelocity(0, 0);
             }
         }
