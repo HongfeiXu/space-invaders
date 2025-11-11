@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 
 # Build output
-dist/
+# dist/          # Commented out: needed for GitHub Pages deployment
 *.bundle.js
 
 # IDE
