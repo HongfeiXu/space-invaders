@@ -84,6 +84,39 @@ project_1/
 
 ---
 
+## ⚠️ IMPORTANT: File Organization Rules
+
+**Markdown File Storage Policy**
+
+When creating or modifying markdown files in this project, follow this rule:
+
+### Default Location: `documentation/memos/`
+- **ALL new markdown files** should be created in `documentation/memos/` by default
+- This includes guides, references, technical documentation, and memo notes
+- Examples: guides, API docs, troubleshooting, configuration explanations, etc.
+
+### Current Directory Layout
+| Location | Purpose | Examples |
+|----------|---------|----------|
+| `README.md` (root) | Game overview for players | Game rules, features, quick start |
+| `CLAUDE.md` (root) | Claude AI project guidance | This file - instructions for AI assistants |
+| `documentation/PLAN.md` | Development roadmap | High-level plans, next steps |
+| `documentation/PROGRESS.md` | Development history | How the project was built, milestones |
+| **`documentation/memos/`** | **Detailed technical guides** | **Code examples, deployment details, configuration, troubleshooting** |
+
+### Exception Rule
+Only create files in other locations (root or `documentation/` directly) if:
+- User explicitly requests it, OR
+- File serves as a high-level overview/navigation document
+
+**Example of correct usage**:
+- ✅ New coding guide → `documentation/memos/CODING_GUIDE.md`
+- ✅ New troubleshooting → `documentation/memos/TROUBLESHOOTING.md`
+- ❌ New guide in root → `/GUIDE.md` (should be in memos)
+- ❌ New memo in documentation → `documentation/MEMO.md` (should be in memos)
+
+---
+
 ## Core Architecture
 
 ### Two-Scene Phaser Architecture
