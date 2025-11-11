@@ -185,12 +185,14 @@ FPS：60 稳定
 **项目结构变化**：
 ```
 docs/              ← 构建输出（GitHub Pages 部署源）
-documentation/    ← 项目文档（原 docs/ 文件夹）
-  ├── README.md
-  ├── GUIDE.md
-  ├── PROGRESS.md
-  ├── DEPLOYMENT_ISSUES.md (新)
-  └── WEBPACK_CONFIG.md (新)
+documentation/    ← 项目文档
+  ├── PLAN.md     ← 下一步计划
+  ├── PROGRESS.md ← 开发历史
+  └── memos/      ← 详细指南和参考
+      ├── GUIDE.md
+      ├── DEPLOYMENT_ISSUES.md
+      ├── WEBPACK_CONFIG.md
+      └── DEPLOYMENT.md
 src/
 public/index.html
 webpack.config.js  (更新)

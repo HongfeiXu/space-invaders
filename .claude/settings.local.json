@@ -6,10 +6,10 @@
       "Bash(node --version:*)",
       "Bash(dir:*)",
       "Bash(tree:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
       "Bash(git ls-tree:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(del QUICKSTART.md)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

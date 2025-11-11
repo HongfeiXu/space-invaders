@@ -69,12 +69,13 @@ project_1/
 │   └── main.js                   # Bundled + minified game code
 │
 ├── documentation/                # Project documentation
-│   ├── README.md                 # Project overview
-│   ├── GUIDE.md                  # Development guide with examples
+│   ├── PLAN.md                   # Development plan and roadmap
 │   ├── PROGRESS.md               # Development history and current status
-│   ├── DEPLOYMENT_ISSUES.md      # GitHub Pages deployment troubleshooting
-│   ├── WEBPACK_CONFIG.md         # Webpack and build system details
-│   └── DEPLOYMENT.md             # Manual deployment guide
+│   └── memos/                    # Detailed guides & reference docs
+│       ├── GUIDE.md              # Development guide with examples
+│       ├── DEPLOYMENT_ISSUES.md  # GitHub Pages deployment troubleshooting
+│       ├── WEBPACK_CONFIG.md     # Webpack and build system details
+│       └── DEPLOYMENT.md         # Manual deployment guide
 │
 ├── webpack.config.js             # Webpack configuration
 ├── package.json                  # Dependencies and scripts
@@ -361,12 +362,13 @@ npm run build
 
 | File | Purpose | Read When |
 |------|---------|-----------|
-| `documentation/README.md` | Project overview, features, tech stack | First time setup |
-| `documentation/GUIDE.md` | Development examples, game parameters, modification guides | Making changes |
-| `documentation/PROGRESS.md` | Development history, architecture decisions | Understanding project evolution |
-| `documentation/DEPLOYMENT_ISSUES.md` | GitHub Pages problems & solutions | Debugging deployment issues |
-| `documentation/WEBPACK_CONFIG.md` | Build system & HtmlWebpackPlugin details | Modifying build pipeline |
-| `documentation/DEPLOYMENT.md` | Manual deployment guide | Alternative deployment methods |
+| `../README.md` | Project overview, features, tech stack | First time setup |
+| `PLAN.md` | Development roadmap & next steps | Planning next features |
+| `PROGRESS.md` | Development history & architecture decisions | Understanding project evolution |
+| `memos/GUIDE.md` | Development examples, game parameters, modification guides | Making changes |
+| `memos/DEPLOYMENT_ISSUES.md` | GitHub Pages problems & solutions | Debugging deployment issues |
+| `memos/WEBPACK_CONFIG.md` | Build system & HtmlWebpackPlugin details | Modifying build pipeline |
+| `memos/DEPLOYMENT.md` | Manual deployment guide | Alternative deployment methods |
 
 ---
 
