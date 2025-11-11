@@ -44,5 +44,12 @@ module.exports = {
   GAME: {
     INITIAL_LIVES: 3,     // Starting lives
     POINTS_PER_ENEMY: 10  // Score for destroying an enemy
+  },
+
+  // UI configuration
+  UI: {
+    SHOW_FPS: true,       // Display FPS counter
+    FPS_X: 10,            // FPS position X
+    FPS_Y: 40             // FPS position Y
   }
 };

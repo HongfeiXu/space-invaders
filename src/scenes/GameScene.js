@@ -27,6 +27,15 @@ class GameScene extends Phaser.Scene {
             fill: '#fff'
         });
 
+        // Create FPS counter if enabled
+        if (GameConfig.UI.SHOW_FPS) {
+            this.fpsText = this.add.text(GameConfig.UI.FPS_X, GameConfig.UI.FPS_Y, 'FPS: 60', {
+                fontSize: '16px',
+                fill: '#0f0',
+                fontFamily: 'monospace'
+            });
+        }
+
         // 创建玩家飞船
         this.player = this.physics.add.sprite(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y, 'player');
         this.player.setCollideWorldBounds(true);
@@ -88,6 +97,11 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
+        // Update FPS counter if enabled
+        if (GameConfig.UI.SHOW_FPS && this.fpsText) {
+            this.fpsText.setText('FPS: ' + Math.round(this.game.loop.actualFps));
+        }
+
         if (this.gameOver || this.isPaused) return;
 
         // 玩家移动控制
