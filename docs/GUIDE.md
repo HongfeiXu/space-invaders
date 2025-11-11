@@ -1,455 +1,294 @@
 # 开发指南
 
-## 项目开发流程
-
-### 快速启动
+## 快速开发流程
 
 ```bash
-# 1. 安装依赖（仅首次）
-npm install
-
-# 2. 启动开发服务器
-npm start
-
-# 浏览器自动打开 http://localhost:3000
+npm start                   # 开发服务器 + HMR
+npm run build              # 生产构建
 ```
 
-### 文件修改工作流
+编辑 `src/` 文件自动热更新。
 
-1. 编辑源文件 (`src/` 或 `public/`)
-2. Webpack 自动检测变化并重新编译
-3. 浏览器自动刷新（HMR）
-4. 看到变化立即反馈
+## 代码概览
 
-### 构建生产版本
+### GameScene 架构
 
-```bash
-npm run build
+```
+create()                  # 初始化阶段
+├── UI 文本
+├── 玩家/敌人/子弹对象
+├── 碰撞检测
+├── 输入键位
+└── 定时器（敌人射击）
 
-# 输出到 dist/ 目录
+update()                  # 每帧更新
+├── 玩家移动（↑↓← →）
+├── 射击逻辑（250ms 冷却）
+├── 子弹清理（超出屏幕）
+└── 敌人补充
 ```
 
-## 代码结构详解
-
-### 入口点: `src/index.js`
-
-这是整个游戏的启动点，主要负责：
-
-1. **创建 Phaser 配置**
-   ```javascript
-   const config = {
-       type: Phaser.AUTO,              // 自动选择 Canvas 或 WebGL
-       width: 800,
-       height: 600,
-       physics: {
-           default: 'arcade',          // 使用 Arcade 物理引擎
-           arcade: {
-               gravity: { y: 0 },      // 无重力（太空游戏）
-               debug: false            // 调试模式（改为 true 可看碰撞框）
-           }
-       },
-       scene: [PreloadScene, GameScene], // 场景加载顺序
-       parent: 'game',                 // HTML 元素 id
-       backgroundColor: '#000'         // 黑色背景
-   };
-   ```
-
-2. **PreloadScene 场景**
-   - 生成游戏所需的纹理（图片）
-   - 在这里加载资源、音效等
-   - 完成后启动 GameScene
-
-3. **初始化 Phaser**
-   ```javascript
-   const game = new Phaser.Game(config);
-   ```
-
-### 游戏逻辑: `src/scenes/GameScene.js`
-
-**类结构**:
-```javascript
-class GameScene extends Phaser.Scene {
-    constructor() { }      // 初始化
-    create() { }           // 场景创建（初始化游戏对象）
-    update() { }           // 每帧更新（游戏逻辑）
-    // ... 其他方法
-}
-```
-
-#### `create()` 方法详解
-
-这个方法在场景启动时调用一次，用于初始化游戏对象：
+### Phaser 常用 API
 
 ```javascript
-create() {
-    // 1. 设置背景和基础变量
-    this.cameras.main.setBackgroundColor('#000');
-    this.score = 0;
-    this.lives = 3;
-    this.gameOver = false;
+// 精灵
+this.add.sprite(x, y, 'texture')
+sprite.setVelocityX(speed)
+sprite.setCollideWorldBounds(true)
 
-    // 2. 创建 UI 文本
-    this.scoreText = this.add.text(10, 10, 'Score: 0', {...});
-    this.livesText = this.add.text(..., 'Lives: 3', {...});
+// 物理组
+this.physics.add.group()
+group.create(x, y, 'texture')
+group.children.entries   // 遍历组内对象
 
-    // 3. 创建玩家飞船
-    this.player = this.physics.add.sprite(400, 550, 'player');
-    this.player.setCollideWorldBounds(true);
+// 碰撞检测
+this.physics.add.overlap(group1, group2, callback)
 
-    // 4. 创建物理组（用于管理多个对象）
-    this.enemies = this.physics.add.group();
-    this.playerBullets = this.physics.add.group();
-    this.enemyBullets = this.physics.add.group();
+// 动画 (Tween)
+this.tweens.add({
+    targets: object,
+    alpha: 0.5,
+    duration: 100,
+    yoyo: true,
+    repeat: 3
+})
 
-    // 5. 生成敌人
-    this.spawnEnemies();
+// 输入
+this.input.keyboard.createCursorKeys()
+this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)
+this.input.keyboard.on('keydown-ESC', callback)
 
-    // 6. 设置碰撞检测
-    this.physics.add.overlap(...);
-
-    // 7. 设置输入控制
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-    // 8. 设置定时事件
-    this.time.addEvent({
-        delay: 1000,
-        callback: this.enemyShoot,
-        loop: true
-    });
-}
-```
-
-#### `update()` 方法详解
-
-这个方法每帧调用一次（约 60 次/秒），用于更新游戏状态：
-
-```javascript
-update() {
-    if (this.gameOver) return; // 游戏结束，停止更新
-
-    // 1. 玩家移动控制
-    if (this.cursors.left.isDown) {
-        this.player.setVelocityX(-250);
-    } else if (this.cursors.right.isDown) {
-        this.player.setVelocityX(250);
-    } else {
-        this.player.setVelocityX(0);
-    }
-
-    // 2. 玩家射击
-    if (this.spaceBar.isDown) {
-        this.playerShoot();
-    }
-
-    // 3. 清理超出屏幕的子弹
-    this.playerBullets.children.entries.forEach(bullet => {
-        if (bullet.y < 0) bullet.destroy();
-    });
-
-    // 4. 检查敌人是否全部消灭
-    if (this.enemies.children.entries.length === 0) {
-        this.spawnEnemies();
-    }
-}
-```
-
-## 常见修改和扩展
-
-### 修改游戏窗口大小
-
-在 `src/index.js` 中修改 config：
-
-```javascript
-const config = {
-    width: 1024,   // 改为 1024
-    height: 768,   // 改为 768
-    // ... 其他配置
-};
-```
-
-### 修改敌人数量和排列
-
-在 `src/scenes/GameScene.js` 中修改 `spawnEnemies()` 方法：
-
-```javascript
-spawnEnemies() {
-    const rows = 4;        // 改为 4 行
-    const cols = 6;        // 改为 6 列
-    const spacingX = 100;  // 增加间距到 100px
-    const spacingY = 70;
-    // ... 其他代码
-}
-```
-
-### 修改玩家速度
-
-在 `update()` 方法中：
-
-```javascript
-if (this.cursors.left.isDown) {
-    this.player.setVelocityX(-350);  // 改为 -350 (从 -250)
-}
-```
-
-### 修改敌人速度
-
-在 `spawnEnemies()` 方法中：
-
-```javascript
-const enemy = this.enemies.create(x, y, 'enemy');
-enemy.setVelocityX(Phaser.Math.Between(-100, 100));  // 改为 -100~100
-```
-
-### 修改敌人射击频率
-
-在 `create()` 方法中：
-
-```javascript
+// 定时器
 this.time.addEvent({
-    delay: 500,    // 改为 500ms（射击更频繁）
-    callback: this.enemyShoot,
+    delay: 1000,
+    callback: func,
     loop: true
-});
+})
 ```
 
-### 修改射击冷却时间
+## 常见修改
 
-在 `playerShoot()` 方法中：
+### 修改游戏参数
+
+所有参数在 `src/scenes/GameScene.js` 中：
+
+| 参数 | 当前值 | 位置 | 修改示例 |
+|------|--------|------|---------|
+| 玩家速度 | 250 | L93-96 | 改为 350 |
+| 射击冷却 | 250ms | L126 | 改为 150 |
+| 敌人速度 | ±50 | L111 | 改为 ±100 |
+| 敌人射击间隔 | 1000ms | L67 | 改为 500 |
+| 敌人闪烁时间 | 80ms | L145 | 改为 100 |
+| 生命值 | 3 | L14 | 改为 5 |
+| 得分 | 10 | L154 | 改为 50 |
+| 游戏分辨率 | 800x600 | src/index.js L54-55 | 改为 1024x768 |
+
+### 实现难度递增
+
+在 `create()` 方法添加：
 
 ```javascript
-if (currentTime - this.lastShotTime > 150) {  // 改为 150ms（射速更快）
+this.difficulty = 1
+
+this.time.addEvent({
+    delay: 30000,           // 每 30 秒
+    callback: () => {
+        this.difficulty++
+        console.log('Difficulty:', this.difficulty)
+    },
+    loop: true
+})
+```
+
+在 `spawnEnemies()` 中修改敌人速度：
+
+```javascript
+const speed = 50 * this.difficulty   // 随难度增加
+enemy.setVelocityX(Phaser.Math.Between(-speed, speed))
+```
+
+### 添加音效
+
+1. 在 `src/index.js` 的 `PreloadScene.preload()` 中加载：
+
+```javascript
+preload() {
+    this.load.audio('shoot', 'assets/sounds/shoot.mp3')
+    this.load.audio('explosion', 'assets/sounds/explosion.mp3')
+}
+```
+
+2. 在 `GameScene` 中播放：
+
+```javascript
+// 射击时
+playerShoot() {
     // ...
+    this.sound.play('shoot')
 }
-```
 
-### 修改击杀敌人得分
-
-在 `hitEnemy()` 方法中：
-
-```javascript
-hitEnemy(bullet, enemy) {
-    bullet.destroy();
-    enemy.destroy();
-    this.score += 50;  // 改为 50 分
-    this.scoreText.setText('Score: ' + this.score);
-}
-```
-
-### 修改初始生命值
-
-在 `create()` 方法中：
-
-```javascript
-this.lives = 5;  // 改为 5 条命
-```
-
-## 添加新功能的步骤
-
-### 例子：添加敌人被击中时的闪烁效果
-
-**步骤 1**: 在 `hitEnemy()` 方法中添加闪烁代码
-
-```javascript
-hitEnemy(bullet, enemy) {
-    bullet.destroy();
-
-    // 添加闪烁效果
-    this.tweens.add({
-        targets: enemy,
-        alpha: 0.5,        // 透明度变为 0.5
-        duration: 100,     // 100ms
-        yoyo: true,        // 往返
-        repeat: 3          // 重复 3 次
-    });
-
-    // 然后消灭敌人
-    this.time.delayedCall(400, () => {
-        enemy.destroy();
-    });
-
-    this.score += 10;
-    this.scoreText.setText('Score: ' + this.score);
-}
-```
-
-**步骤 2**: 在浏览器中测试修改是否生效
-
-### 例子：添加难度递增
-
-**步骤 1**: 在 `create()` 中添加难度追踪
-
-```javascript
-create() {
-    // ... 其他代码
-    this.difficulty = 1;  // 难度等级
-    this.enemyBaseSpeed = 50;  // 敌人基础速度
-
-    // 每 30 秒增加难度
-    this.time.addEvent({
-        delay: 30000,
-        callback: () => {
-            this.difficulty++;
-            console.log('Difficulty increased to:', this.difficulty);
-        },
-        loop: true
-    });
-}
-```
-
-**步骤 2**: 在生成敌人时使用难度
-
-```javascript
-spawnEnemies() {
+// 敌人消灭时
+hitEnemy() {
     // ...
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-            const x = startX + col * spacingX;
-            const y = startY + row * spacingY;
-            const enemy = this.enemies.create(x, y, 'enemy');
+    this.sound.play('explosion')
+}
+```
 
-            // 根据难度调整速度
-            const speed = this.enemyBaseSpeed * this.difficulty;
-            enemy.setVelocityX(Phaser.Math.Between(-speed, speed));
+### 改进敌人 AI
 
-            enemy.setBounce(1, 1);
-            enemy.setCollideWorldBounds(true);
-        }
+当前敌人完全随机射击。改为向玩家方向射击：
+
+```javascript
+enemyShoot() {
+    if (this.enemies.children.entries.length === 0) return
+
+    const randomEnemy = Phaser.Utils.Array.GetRandom(this.enemies.children.entries)
+
+    // 计算射击方向（指向玩家）
+    const angle = Phaser.Math.Angle.Between(
+        randomEnemy.x, randomEnemy.y,
+        this.player.x, this.player.y
+    )
+
+    const bullet = this.enemyBullets.create(randomEnemy.x, randomEnemy.y + 10, 'enemyBullet')
+
+    // 按角度射击
+    this.physics.velocityFromAngle(Phaser.Math.RadToDeg(angle), 200, bullet.body.velocity)
+}
+```
+
+### 提取配置到单独文件
+
+创建 `src/config/GameConfig.js`：
+
+```javascript
+module.exports = {
+    GAME: {
+        WIDTH: 800,
+        HEIGHT: 600,
+        FPS: 60
+    },
+    PLAYER: {
+        SPEED: 250,
+        SHOOT_DELAY: 250
+    },
+    ENEMY: {
+        SPEED: 50,
+        SHOOT_DELAY: 1000
+    },
+    BULLET: {
+        PLAYER_SPEED: 400,
+        ENEMY_SPEED: 200
     }
+}
+```
+
+在 GameScene 中使用：
+
+```javascript
+const config = require('../config/GameConfig')
+
+this.player.setVelocityX(config.PLAYER.SPEED)
+```
+
+## 物体池优化
+
+当前直接 `destroy()` 子弹，大量创建销毁影响性能。改为预创建对象池：
+
+```javascript
+// 在 create() 中预创建
+this.playerBullets = this.physics.add.group()
+for (let i = 0; i < 100; i++) {
+    const bullet = this.playerBullets.create(0, 0, 'playerBullet')
+    bullet.setActive(false).setVisible(false)
+}
+
+// 射击时复用
+playerShoot() {
+    const bullet = this.playerBullets.getFirst(false)  // 获取非活跃子弹
+    if (bullet) {
+        bullet.setActive(true).setVisible(true)
+        bullet.setPosition(this.player.x, this.player.y - 10)
+        bullet.setVelocityY(-400)
+    }
+}
+
+// 超出屏幕时回收
+update() {
+    this.playerBullets.children.entries.forEach(bullet => {
+        if (bullet.y < 0 && bullet.active) {
+            bullet.setActive(false).setVisible(false)
+        }
+    })
 }
 ```
 
 ## 调试技巧
 
-### 启用物理调试模式
+### 显示碰撞体
 
 在 `src/index.js` 中修改：
 
 ```javascript
 arcade: {
     gravity: { y: 0 },
-    debug: true  // 改为 true
+    debug: true    // 显示碰撞框
 }
 ```
-
-这样会显示所有碰撞体的边框，方便调试碰撞问题。
 
 ### 输出日志
 
-在关键位置添加 `console.log()`:
-
 ```javascript
-hitEnemy(bullet, enemy) {
-    console.log('Enemy hit! Score:', this.score);
-    // ... 其他代码
-}
+// 敌人被击中时
+console.log('Enemy hit. Score:', this.score)
+
+// 游戏状态
+console.log('Enemies:', this.enemies.children.entries.length)
+console.log('Player bullets:', this.playerBullets.children.entries.length)
 ```
 
-在浏览器的开发者工具（F12）的 Console 标签查看输出。
+在浏览器 DevTools (F12) → Console 查看。
 
-### 检查游戏对象数量
+### 临时禁用敌人射击
 
-在 `update()` 中添加：
+在 `create()` 中注释掉：
 
 ```javascript
-// 临时调试（记得删除）
-if (Math.random() < 0.01) {  // 每秒随机输出一次
-    console.log('Enemies:', this.enemies.children.entries.length);
-    console.log('Player bullets:', this.playerBullets.children.entries.length);
-    console.log('Enemy bullets:', this.enemyBullets.children.entries.length);
-}
+// this.time.addEvent({...})  // 注释此行
 ```
 
-## 性能优化建议
+## 性能优化清单
 
-### 1. 使用对象池（Object Pool）
+- [ ] 提取魔法数字到配置文件
+- [ ] 实现物体池（子弹复用）
+- [ ] 限制敌人最大数量
+- [ ] 使用 Canvas 而非 WebGL（如需更好兼容性）
+- [ ] 压缩图片资源
+- [ ] 删除未使用的代码
 
-当前实现每次创建新对象，频繁销毁会影响性能。
+## 常见错误
 
-```javascript
-// 预创建子弹池
-this.playerBullets = this.physics.add.group();
-for (let i = 0; i < 100; i++) {
-    const bullet = this.playerBullets.create(0, 0, 'playerBullet');
-    bullet.setActive(false).setVisible(false);
-}
-```
-
-射击时复用而不是创建：
+**错误**: `Cannot read property 'x' of undefined`
+**原因**: 对象被销毁后仍被访问
+**修复**: 检查对象是否存在
 
 ```javascript
-playerShoot() {
-    const bullet = this.playerBullets.getFirst(false);  // 获取非活跃子弹
-    if (bullet) {
-        bullet.setActive(true).setVisible(true);
-        bullet.setPosition(this.player.x, this.player.y - 10);
-        bullet.setVelocityY(-400);
-    }
-}
-```
-
-### 2. 减少物理计算
-
-关闭不需要的碰撞检测：
-
-```javascript
-// 只在需要时启用敌人之间的碰撞
-// this.physics.add.collider(this.enemies, this.enemies);
-```
-
-### 3. 限制敌人数量
-
-```javascript
-spawnEnemies() {
-    const maxEnemies = 30;  // 最多 30 个敌人
-    if (this.enemies.children.entries.length > maxEnemies) {
-        return;
-    }
-    // ... 生成代码
-}
-```
-
-## 常见错误和解决方案
-
-### 错误 1: "Cannot read property 'x' of undefined"
-
-**原因**: 尝试访问不存在的对象属性
-
-**解决**:
-```javascript
-// ❌ 错误
-if (this.player.x > 400) { }
-
-// ✅ 正确
 if (this.player && this.player.x > 400) { }
 ```
 
-### 错误 2: "Texture not found: 'player'"
+**错误**: 子弹一直射出不停
+**原因**: `lastShotTime` 未正确更新
+**修复**: 在射击后更新时间
 
-**原因**: 纹理在 PreloadScene 中没有正确生成
-
-**解决**: 确保 PreloadScene 中正确调用了 `generateTexture()`
-
-### 错误 3: 子弹一直射出不停
-
-**原因**: 射击冷却时间逻辑错误
-
-**解决**:
 ```javascript
-// ✅ 正确的冷却逻辑
-if (!this.lastShotTime) this.lastShotTime = 0;
-const currentTime = this.time.now;
-if (currentTime - this.lastShotTime > 250) {
-    // 射击
-    this.lastShotTime = currentTime;  // 不要忘记更新时间
-}
+this.lastShotTime = this.time.now
 ```
 
-## 下一步学习资源
+## 相关资源
 
-- [Phaser 官方文档](https://photonstorm.github.io/phaser3-docs/)
-- [Phaser 示例](https://labs.phaser.io/)
-- [WebGL 和 Canvas 教程](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
+- [Phaser 3 API 文档](https://photonstorm.github.io/phaser3-docs/)
+- [Phaser 示例集](https://labs.phaser.io/)
+- [物理引擎文档](https://photonstorm.github.io/phaser3-docs/Phaser.Physics.Arcade.html)
 
 ---
 
