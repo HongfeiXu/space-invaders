@@ -138,7 +138,19 @@ class GameScene extends Phaser.Scene {
 
     hitEnemy(bullet, enemy) {
         bullet.destroy();
-        enemy.destroy();
+
+        // 敌人被击中闪烁效果
+        this.tweens.add({
+            targets: enemy,
+            alpha: 0.3,           // 透明度变为 0.3
+            duration: 80,         // 80ms
+            yoyo: true,           // 往返（闪烁）
+            repeat: 3,            // 重复 3 次
+            onComplete: () => {
+                enemy.destroy();  // 闪烁完后消灭敌人
+            }
+        });
+
         this.score += 10;
         this.scoreText.setText('Score: ' + this.score);
     }
