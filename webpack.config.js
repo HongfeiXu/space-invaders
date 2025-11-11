@@ -1,4 +1,5 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = (_env, argv) => {
     const isProduction = argv.mode === 'production';
@@ -11,6 +12,16 @@ module.exports = (_env, argv) => {
             path: path.resolve(__dirname, 'docs'),
             publicPath: isProduction ? '/space-invaders/' : '/',
         },
+        plugins: [
+            new HtmlWebpackPlugin({
+                template: './public/index.html',
+                filename: 'index.html',
+                minify: isProduction ? {
+                    removeComments: true,
+                    collapseWhitespace: true,
+                } : false,
+            }),
+        ],
         devServer: {
             static: {
                 directory: path.join(__dirname, 'public'),
