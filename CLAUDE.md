@@ -43,7 +43,7 @@ npm run build
 
 # 3. Commit and push to GitHub
 git add .
-git commit -m "Descriptive message"
+git commit -m "Clean and Brief message"
 git push origin main
 # GitHub Pages auto-deploys from /docs folder (~1-2 minutes)
 ```
