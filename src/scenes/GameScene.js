@@ -80,6 +80,14 @@ class GameScene extends Phaser.Scene {
             callbackScope: this,
             loop: true
         });
+
+        // 播放背景音乐
+        // 音乐来自: Eric Matyas (www.soundimage.org)
+        this.backgroundMusic = this.sound.add('backgroundMusic');
+        this.backgroundMusic.play({
+            loop: GameConfig.AUDIO.BACKGROUND_MUSIC_LOOP,
+            volume: GameConfig.AUDIO.BACKGROUND_MUSIC_VOLUME
+        });
     }
 
     togglePause() {
@@ -90,9 +98,17 @@ class GameScene extends Phaser.Scene {
         if (this.isPaused) {
             this.physics.pause();
             this.pauseText.setVisible(true);
+            // 暂停背景音乐
+            if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
+                this.backgroundMusic.pause();
+            }
         } else {
             this.physics.resume();
             this.pauseText.setVisible(false);
+            // 恢复背景音乐
+            if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
+                this.backgroundMusic.resume();
+            }
         }
     }
 
@@ -213,6 +229,11 @@ class GameScene extends Phaser.Scene {
     endGame() {
         this.gameOver = true;
         this.physics.pause();
+
+        // 停止背景音乐
+        if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
+            this.backgroundMusic.stop();
+        }
 
         const gameOverText = this.add.text(
             this.cameras.main.width / 2,

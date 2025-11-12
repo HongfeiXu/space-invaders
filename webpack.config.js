@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = (_env, argv) => {
     const isProduction = argv.mode === 'production';
@@ -20,6 +21,11 @@ module.exports = (_env, argv) => {
                     removeComments: true,
                     collapseWhitespace: true,
                 } : false,
+            }),
+            new CopyPlugin({
+                patterns: [
+                    { from: 'public/assets', to: 'assets' },
+                ],
             }),
         ],
         devServer: {

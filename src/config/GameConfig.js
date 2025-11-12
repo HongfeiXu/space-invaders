@@ -51,5 +51,11 @@ module.exports = {
     SHOW_FPS: true,       // Display FPS counter
     FPS_X: 10,            // FPS position X
     FPS_Y: 40             // FPS position Y
+  },
+
+  // Audio configuration
+  AUDIO: {
+    BACKGROUND_MUSIC_VOLUME: 0.5,  // Background music volume (0.0-1.0)
+    BACKGROUND_MUSIC_LOOP: true    // Background music loops
   }
 };
