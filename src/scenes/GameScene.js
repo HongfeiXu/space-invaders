@@ -16,6 +16,9 @@ class GameScene extends Phaser.Scene {
         this.gameOver = false;
         this.isPaused = false;
 
+        // 注册 shutdown 事件以清理资源
+        this.events.on('shutdown', this.shutdown, this);
+
         // 创建UI文本
         this.scoreText = this.add.text(10, 10, 'Score: 0', {
             fontSize: '20px',
@@ -74,7 +77,7 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setVisible(false);
 
         // 敌人射击定时器
-        this.time.addEvent({
+        this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
             callback: this.enemyShoot,
             callbackScope: this,
@@ -102,12 +105,20 @@ class GameScene extends Phaser.Scene {
             if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
                 this.backgroundMusic.pause();
             }
+            // 暂停敌人射击定时器
+            if (this.enemyFireTimer) {
+                this.enemyFireTimer.paused = true;
+            }
         } else {
             this.physics.resume();
             this.pauseText.setVisible(false);
             // 恢复背景音乐
             if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
                 this.backgroundMusic.resume();
+            }
+            // 恢复敌人射击定时器
+            if (this.enemyFireTimer) {
+                this.enemyFireTimer.paused = false;
             }
         }
     }
@@ -262,6 +273,21 @@ class GameScene extends Phaser.Scene {
         this.input.keyboard.on('keydown-SPACE', () => {
             this.scene.restart();
         });
+    }
+
+    shutdown() {
+        // 停止并销毁背景音乐（防止内存泄漏）
+        if (this.backgroundMusic) {
+            this.backgroundMusic.stop();
+            this.backgroundMusic.destroy();
+        }
+
+        // 停止敌人射击定时器
+        if (this.enemyFireTimer) {
+            this.enemyFireTimer.remove();
+        }
+        // 移除事件监听器
+        this.events.off('shutdown', this.shutdown, this);
     }
 }
 
