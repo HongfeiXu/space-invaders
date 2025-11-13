@@ -50,7 +50,7 @@ module.exports = {
   UI: {
     SHOW_FPS: true,       // Display FPS counter
     FPS_X: 10,            // FPS position X
-    FPS_Y: 40             // FPS position Y
+    FPS_Y: 580            // FPS position Y (changed from 40 to 580 for bottom-left)
   },
 
   // Audio configuration

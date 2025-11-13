@@ -17,18 +17,14 @@ class GameScene extends Phaser.Scene {
         this.isPaused = false;
 
         // 注册 shutdown 事件以清理资源
+        // 说明：this.scene.restart() 时触发此事件，在重新调用 create() 之前
         this.events.on('shutdown', this.shutdown, this);
 
-        // 创建UI文本
-        this.scoreText = this.add.text(10, 10, 'Score: 0', {
-            fontSize: '20px',
-            fill: '#fff'
-        });
+        // 初始化最高分系统
+        this.initHighScoreSystem();
 
-        this.livesText = this.add.text(this.cameras.main.width - 150, 10, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
-            fontSize: '20px',
-            fill: '#fff'
-        });
+        // 创建UI文本
+        this.createUITexts();
 
         // Create FPS counter if enabled
         if (GameConfig.UI.SHOW_FPS) {
@@ -216,8 +212,7 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        this.score += GameConfig.GAME.POINTS_PER_ENEMY;
-        this.scoreText.setText('Score: ' + this.score);
+        this.updateScore(GameConfig.GAME.POINTS_PER_ENEMY);
     }
 
     hitPlayer(player, bullet) {
@@ -246,13 +241,27 @@ class GameScene extends Phaser.Scene {
             this.backgroundMusic.stop();
         }
 
+        // 保存最高分到 localStorage
+        localStorage.setItem('highScore', this.highScore.toString());
+
+        // 检查是否破纪录（当前分数 > 游戏开始时的最高分）
+        const isNewRecord = this.hasShownNewRecordAnimation;
+
+        // 构建 Game Over 文本
+        let gameOverMessage = 'GAME OVER\n';
+        gameOverMessage += 'Score: ' + this.score + '\n';
+        gameOverMessage += 'High Score: ' + this.highScore;
+        if (isNewRecord) {
+            gameOverMessage += '\n🎉 NEW RECORD! 🎉';
+        }
+
         const gameOverText = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            'GAME OVER\nScore: ' + this.score,
+            this.cameras.main.height / 2 - 40,
+            gameOverMessage,
             {
-                fontSize: '48px',
-                fill: '#fff',
+                fontSize: '40px',
+                fill: isNewRecord ? '#FFD700' : '#fff',
                 align: 'center'
             }
         ).setOrigin(0.5);
@@ -260,7 +269,7 @@ class GameScene extends Phaser.Scene {
         // 添加重启按钮提示
         this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 100,
+            this.cameras.main.height / 2 + 120,
             'Press SPACE to restart',
             {
                 fontSize: '20px',
@@ -274,6 +283,96 @@ class GameScene extends Phaser.Scene {
             this.scene.restart();
         });
     }
+
+    // ==================== 最高分系统 ====================
+
+    initHighScoreSystem() {
+        // 从 localStorage 读取最高分
+        this.highScore = parseInt(localStorage.getItem('highScore')) || 0;
+        this.hasShownNewRecordAnimation = false;  // 控制动画是否已显示
+    }
+
+    createUITexts() {
+        // 左上角：最高分
+        this.highScoreText = this.add.text(10, 10, `High Score: ${this.highScore}`, {
+            fontSize: '20px',
+            fill: '#ffd700'  // 金色
+        });
+
+        // 左上角：当前分数（在最高分下方）
+        this.scoreText = this.add.text(10, 35, 'Score: 0', {
+            fontSize: '20px',
+            fill: '#fff'
+        });
+
+        // 右上角：生命值
+        this.livesText = this.add.text(this.cameras.main.width - 150, 10, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
+            fontSize: '20px',
+            fill: '#fff'
+        });
+    }
+
+    updateScore(points) {
+        this.score += points;
+        this.scoreText.setText('Score: ' + this.score);
+
+        // 实时检查是否破纪录，持续更新最高分
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.highScoreText.setText(`High Score: ${this.highScore}`);
+
+            // 只显示一次动画
+            if (!this.hasShownNewRecordAnimation) {
+                this.hasShownNewRecordAnimation = true;
+                this.showNewRecordAnimation();
+            }
+        }
+    }
+
+    showNewRecordAnimation() {
+        // 在屏幕顶部中间显示破纪录提示
+        const newRecordText = this.add.text(
+            this.cameras.main.width / 2,
+            50,
+            '⭐ NEW HIGH SCORE! ⭐',
+            {
+                fontSize: '40px',
+                fill: '#FFD700',
+                fontStyle: 'bold',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        // 缩放 + 闪烁动画，1秒后消失
+        this.tweens.add({
+            targets: newRecordText,
+            scale: { from: 0.5, to: 1.0 },
+            duration: 200,
+            onComplete: () => {
+                // 闪烁效果
+                this.tweens.add({
+                    targets: newRecordText,
+                    alpha: { from: 1, to: 0.5 },
+                    duration: 100,
+                    yoyo: true,
+                    repeat: 3,
+                    onComplete: () => {
+                        // 淡出消失
+                        this.tweens.add({
+                            targets: newRecordText,
+                            alpha: 0,
+                            duration: 300,
+                            onComplete: () => {
+                                newRecordText.destroy();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // ==================== 生命周期管理 ====================
 
     shutdown() {
         // 停止并销毁背景音乐（防止内存泄漏）

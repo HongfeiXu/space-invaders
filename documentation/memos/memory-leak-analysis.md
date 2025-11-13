@@ -77,12 +77,11 @@ if (this.enemyFireTimer) {
 
 ### 3. 生命周期管理改进 📝 已添加
 
-添加了 `shutdown` 和 `preShutdown` 生命周期钩子，用于资源清理：
+添加了 `shutdown` 生命周期钩子，用于资源清理：
 
 ```javascript
 // src/scenes/GameScene.js L20-21
 this.events.on('shutdown', this.shutdown, this);
-this.events.on('preShutdown', this.preShutdown, this);
 
 // L287-302
 shutdown() {
@@ -99,7 +98,6 @@ shutdown() {
     }
     // 移除事件监听器
     this.events.off('shutdown', this.shutdown, this);
-    this.events.off('preShutdown', this.preShutdown, this);
 }
 ```
 
