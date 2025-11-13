@@ -115,12 +115,35 @@ Modify values there to adjust gameplay without touching game logic.
 git status           # Review changes
 git diff             # See detailed changes
 git add .
-git commit -m "Clear, descriptive message"
+git commit -m "type: brief summary"
 git push origin main
 git log --oneline -10  # View recent commits
 ```
 
-Keep commits concise and focused. This project has a clean history—maintain it.
+### Commit Message Style
+
+Keep commits **concise and focused** (details go in docs, not commit messages):
+
+**Format**:
+```
+<type>: <summary> (≤50 chars)
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Guidelines**:
+- Use imperative mood: "add" not "added"
+- Be specific but brief: `feat: Add difficulty scaling` not `Update game`
+- Only add body if critical detail essential
+- Types: feat, fix, docs, refactor, test, perf
+
+**Examples**:
+- ✅ `feat: Add difficulty scaling system`
+- ✅ `fix: Correct player collision bounds`
+- ✅ `docs: Update deployment guide`
+- ❌ `Update` (too vague)
+- ❌ Long multi-line descriptions (put in docs instead)
 
 ## Next Steps
 
