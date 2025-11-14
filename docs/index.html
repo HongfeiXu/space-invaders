@@ -4,13 +4,26 @@
             box-sizing: border-box;
         }
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background: #000;
             font-family: Arial, sans-serif;
         }
         #game {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        #game::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             border: 2px solid #fff;
+            pointer-events: none;
+            z-index: 1000;
         }</style><script defer="defer" src="/space-invaders/main.js"></script></head><body><div id="game"></div></body></html>
