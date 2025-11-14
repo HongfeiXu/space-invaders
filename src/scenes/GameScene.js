@@ -81,11 +81,30 @@ class GameScene extends Phaser.Scene {
         });
 
         // 暂停提示文本
-        this.pauseText = this.add.text(400, 300, 'PAUSED\n\nPress ESC to Resume\nPress R to Restart', {
-            fontSize: '40px',
+        this.pauseText = this.add.text(400, 200, 'PAUSED', {
+            fontSize: '50px',
             fill: '#fff',
             align: 'center'
         }).setOrigin(0.5).setVisible(false);
+
+        // 暂停菜单按钮
+        this.pauseResumeButton = this.createButton(
+            400,
+            300,
+            'Resume',
+            () => this.togglePause(),
+            { width: 180, height: 50 }
+        );
+        this.pauseResumeButton.setVisible(false);
+
+        this.pauseRestartButton = this.createButton(
+            400,
+            370,
+            'Restart',
+            () => this.scene.restart(),
+            { width: 180, height: 50 }
+        );
+        this.pauseRestartButton.setVisible(false);
 
         // 敌人射击定时器
         this.enemyFireTimer = this.time.addEvent({
@@ -103,28 +122,127 @@ class GameScene extends Phaser.Scene {
             volume: GameConfig.AUDIO.BACKGROUND_MUSIC_VOLUME
         });
 
-        // 触摸控制（移动端适配）
+        // 触摸控制（移动端适配）- 只在非桌面设备上启用
         this.isTouchLeft = false;
         this.isTouchRight = false;
 
-        // 保存事件处理器引用以便清理
-        this.touchDownHandler = (pointer) => {
-            if (this.gameOver || this.isPaused) return;
-            const halfWidth = this.cameras.main.width / 2;
-            if (pointer.x < halfWidth) {
-                this.isTouchLeft = true;
-            } else {
-                this.isTouchRight = true;
+        // 检测是否为移动设备
+        const isMobileDevice = !this.sys.game.device.os.desktop;
+
+        // 只在移动设备上启用触摸控制
+        if (isMobileDevice) {
+            // 保存事件处理器引用以便清理
+            this.touchDownHandler = (pointer) => {
+                if (this.gameOver || this.isPaused) return;
+
+                const halfWidth = this.cameras.main.width / 2;
+                if (pointer.x < halfWidth) {
+                    this.isTouchLeft = true;
+                } else {
+                    this.isTouchRight = true;
+                }
+            };
+
+            this.touchUpHandler = () => {
+                this.isTouchLeft = false;
+                this.isTouchRight = false;
+            };
+
+            this.input.on('pointerdown', this.touchDownHandler);
+            this.input.on('pointerup', this.touchUpHandler);
+        }
+
+        // 创建暂停按钮（右上角）
+        this.pauseButton = this.createButton(
+            this.cameras.main.width - 80,
+            40,
+            '❚❚',
+            () => this.togglePause(),
+            {
+                width: 60,
+                height: 40,
+                fontSize: '20px'
             }
+        );
+    }
+
+    /**
+     * 创建可点击按钮
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @param {string} text - 按钮文字
+     * @param {Function} callback - 点击回调函数
+     * @param {object} options - 可选配置 {width, height, fontSize, bgColor, textColor}
+     * @returns {Phaser.GameObjects.Container} 按钮容器
+     */
+    createButton(x, y, text, callback, options = {}) {
+        const config = {
+            width: options.width || 200,
+            height: options.height || 60,
+            fontSize: options.fontSize || '24px',
+            bgColor: options.bgColor || 0x000000,
+            bgAlpha: options.bgAlpha || 0.7,
+            textColor: options.textColor || '#ffffff',
+            borderColor: options.borderColor || 0xffffff,
+            borderWidth: options.borderWidth || 2
         };
 
-        this.touchUpHandler = () => {
-            this.isTouchLeft = false;
-            this.isTouchRight = false;
-        };
+        // 创建容器
+        const container = this.add.container(x, y);
 
-        this.input.on('pointerdown', this.touchDownHandler);
-        this.input.on('pointerup', this.touchUpHandler);
+        // 创建背景
+        const bg = this.add.graphics();
+        bg.fillStyle(config.bgColor, config.bgAlpha);
+        bg.lineStyle(config.borderWidth, config.borderColor, 1);
+        bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+        bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+
+        // 创建文本
+        const buttonText = this.add.text(0, 0, text, {
+            fontSize: config.fontSize,
+            fill: config.textColor,
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // 添加到容器
+        container.add([bg, buttonText]);
+
+        // 设置交互区域（自定义 hitArea，以容器中心为原点）
+        container.setInteractive(
+            new Phaser.Geom.Rectangle(-config.width / 2, -config.height / 2, config.width, config.height),
+            Phaser.Geom.Rectangle.Contains
+        );
+
+        // 添加点击效果
+        container.on('pointerdown', () => {
+            container.setScale(0.95);
+            bg.clear();
+            bg.fillStyle(config.bgColor, config.bgAlpha + 0.2);
+            bg.lineStyle(config.borderWidth, config.borderColor, 1);
+            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+        });
+
+        container.on('pointerup', () => {
+            container.setScale(1);
+            bg.clear();
+            bg.fillStyle(config.bgColor, config.bgAlpha);
+            bg.lineStyle(config.borderWidth, config.borderColor, 1);
+            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+            callback();
+        });
+
+        container.on('pointerout', () => {
+            container.setScale(1);
+            bg.clear();
+            bg.fillStyle(config.bgColor, config.bgAlpha);
+            bg.lineStyle(config.borderWidth, config.borderColor, 1);
+            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
+        });
+
+        return container;
     }
 
     togglePause() {
@@ -135,6 +253,8 @@ class GameScene extends Phaser.Scene {
         if (this.isPaused) {
             this.physics.pause();
             this.pauseText.setVisible(true);
+            this.pauseResumeButton.setVisible(true);
+            this.pauseRestartButton.setVisible(true);
             // 暂停背景音乐
             if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
                 this.backgroundMusic.pause();
@@ -143,13 +263,11 @@ class GameScene extends Phaser.Scene {
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = true;
             }
-            // 添加 R 键重启监听器
-            this.restartKeyListener = this.input.keyboard.on('keydown-R', () => {
-                this.scene.restart();
-            });
         } else {
             this.physics.resume();
             this.pauseText.setVisible(false);
+            this.pauseResumeButton.setVisible(false);
+            this.pauseRestartButton.setVisible(false);
             // 恢复背景音乐
             if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
                 this.backgroundMusic.resume();
@@ -157,11 +275,6 @@ class GameScene extends Phaser.Scene {
             // 恢复敌人射击定时器
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = false;
-            }
-            // 移除 R 键重启监听器
-            if (this.restartKeyListener) {
-                this.input.keyboard.off('keydown-R', this.restartKeyListener);
-                this.restartKeyListener = null;
             }
         }
     }
@@ -403,7 +516,7 @@ class GameScene extends Phaser.Scene {
 
         const gameOverText = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 40,
+            this.cameras.main.height / 2 - 60,
             gameOverMessage,
             {
                 fontSize: '40px',
@@ -412,22 +525,14 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // 添加重启按钮提示
-        this.add.text(
+        // 添加 Restart 按钮
+        this.createButton(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 120,
-            'Press SPACE to restart',
-            {
-                fontSize: '20px',
-                fill: '#fff',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // 按空格重启
-        this.input.keyboard.on('keydown-SPACE', () => {
-            this.scene.restart();
-        });
+            this.cameras.main.height / 2 + 100,
+            'Restart',
+            () => this.scene.restart(),
+            { width: 200, height: 60, fontSize: '28px' }
+        );
     }
 
     // ==================== 最高分系统 ====================
@@ -465,8 +570,8 @@ class GameScene extends Phaser.Scene {
             fill: '#fff'
         });
 
-        // 右上角：生命值
-        this.livesText = this.add.text(this.cameras.main.width - 150, 10, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
+        // 左上角：生命值（在分数下方，空一行距离）
+        this.livesText = this.add.text(10, 85, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
             fontSize: '20px',
             fill: '#fff'
         });
@@ -644,21 +749,26 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
+        // 添加 Continue 按钮
+        this.continueButton = this.createButton(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 110,
+            'Continue',
+            () => this.restartWaveCycle(),
+            { width: 200, height: 60, fontSize: '28px' }
+        );
+
+        // 添加提示文字
         this.continueHint = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 100,
-            'Press SPACE to Continue\n(Restart from Wave 1)',
+            this.cameras.main.height / 2 + 180,
+            '(Restart from Wave 1)',
             {
-                fontSize: '20px',
+                fontSize: '18px',
                 fill: '#aaa',
                 align: 'center'
             }
         ).setOrigin(0.5);
-
-        // 监听 SPACE 键继续
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.restartWaveCycle();
-        });
     }
 
     restartWaveCycle() {
@@ -708,6 +818,10 @@ class GameScene extends Phaser.Scene {
         if (this.statsText) {
             this.statsText.destroy();
             this.statsText = null;
+        }
+        if (this.continueButton) {
+            this.continueButton.destroy();
+            this.continueButton = null;
         }
         if (this.continueHint) {
             this.continueHint.destroy();
