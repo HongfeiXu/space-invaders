@@ -1,5 +1,8 @@
 const Phaser = require('phaser');
 const GameConfig = require('../config/GameConfig');
+const AudioManager = require('../managers/AudioManager');
+const ScoreManager = require('../managers/ScoreManager');
+const EffectsManager = require('../managers/EffectsManager');
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -10,8 +13,12 @@ class GameScene extends Phaser.Scene {
         // 设置游戏背景
         this.cameras.main.setBackgroundColor('#000');
 
+        // 初始化管理器
+        this.audioManager = new AudioManager(this);
+        this.scoreManager = new ScoreManager(this);
+        this.effectsManager = new EffectsManager(this);
+
         // 初始化游戏变量
-        this.score = 0;
         this.lives = GameConfig.GAME.INITIAL_LIVES;
         this.gameOver = false;
         this.isPaused = false;
@@ -23,14 +30,10 @@ class GameScene extends Phaser.Scene {
 
         // 玩家无敌状态管理
         this.isInvincible = false;
-        this.playerBlinkTween = null;
 
         // 注册 shutdown 事件以清理资源
         // 说明：this.scene.restart() 时触发此事件，在重新调用 create() 之前
         this.events.on('shutdown', this.shutdown, this);
-
-        // 初始化最高分系统
-        this.initHighScoreSystem();
 
         // 创建UI文本
         this.createUITexts();
@@ -116,11 +119,7 @@ class GameScene extends Phaser.Scene {
 
         // 播放背景音乐
         // 音乐来自: Eric Matyas (www.soundimage.org)
-        this.backgroundMusic = this.sound.add('backgroundMusic');
-        this.backgroundMusic.play({
-            loop: GameConfig.AUDIO.BACKGROUND_MUSIC_LOOP,
-            volume: GameConfig.AUDIO.BACKGROUND_MUSIC_VOLUME
-        });
+        this.audioManager.playBackgroundMusic();
 
         // 触摸控制（移动端适配）- 只在非桌面设备上启用
         this.isTouchLeft = false;
@@ -256,9 +255,7 @@ class GameScene extends Phaser.Scene {
             this.pauseResumeButton.setVisible(true);
             this.pauseRestartButton.setVisible(true);
             // 暂停背景音乐
-            if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
-                this.backgroundMusic.pause();
-            }
+            this.audioManager.pauseBackgroundMusic();
             // 暂停敌人射击定时器
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = true;
@@ -269,9 +266,7 @@ class GameScene extends Phaser.Scene {
             this.pauseResumeButton.setVisible(false);
             this.pauseRestartButton.setVisible(false);
             // 恢复背景音乐
-            if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
-                this.backgroundMusic.resume();
-            }
+            this.audioManager.resumeBackgroundMusic();
             // 恢复敌人射击定时器
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = false;
@@ -376,15 +371,8 @@ class GameScene extends Phaser.Scene {
         bullet.destroy();
 
         // 敌人被击中闪烁效果
-        this.tweens.add({
-            targets: enemy,
-            alpha: GameConfig.EFFECTS.BLINK_ALPHA,
-            duration: GameConfig.EFFECTS.BLINK_DURATION,
-            yoyo: true,
-            repeat: GameConfig.EFFECTS.BLINK_REPEAT,
-            onComplete: () => {
-                enemy.destroy();
-            }
+        this.effectsManager.blinkSprite(enemy, () => {
+            enemy.destroy();
         });
 
         this.updateScore(GameConfig.GAME.POINTS_PER_ENEMY);
@@ -429,69 +417,12 @@ class GameScene extends Phaser.Scene {
         this.isInvincible = true;
 
         // 显示 HIT! 文字
-        const hitText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            'HIT!',
-            {
-                fontSize: '60px',
-                fill: '#ff0000',
-                fontStyle: 'bold',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
+        this.effectsManager.showHitText();
 
-        // HIT! 文字在指定时间后消失
-        this.time.delayedCall(GameConfig.PLAYER.HIT_TEXT_DURATION, () => {
-            if (hitText && hitText.active) {
-                hitText.destroy();
-            }
-        });
-
-        // 清理之前的闪烁动画（如果存在）
-        if (this.playerBlinkTween) {
-            this.playerBlinkTween.stop();
-            this.playerBlinkTween = null;
-        }
-
-        // 确保玩家可见
-        player.setAlpha(1);
-
-        // 第一次闪烁（被击中时，0.5s）
-        const blinkDuration = GameConfig.PLAYER.HIT_BLINK_DURATION;
-        const blinkCycleDuration = GameConfig.EFFECTS.BLINK_CYCLE_DURATION;
-        const blinkCycles = Math.floor(blinkDuration / blinkCycleDuration);
-
-        this.playerBlinkTween = this.tweens.add({
-            targets: player,
-            alpha: { from: 1, to: GameConfig.EFFECTS.BLINK_ALPHA },
-            duration: blinkCycleDuration / 2,
-            yoyo: true,
-            repeat: blinkCycles - 1,
-            onComplete: () => {
-                // 0.5s后重生
-                player.setPosition(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y);
-                player.setVelocity(0, 0);
-                player.setAlpha(1);
-
-                // 继续闪烁（重生后无敌期间，0.5s）
-                const invincibleBlinkDuration = GameConfig.PLAYER.INVINCIBLE_DURATION;
-                const invincibleBlinkCycles = Math.floor(invincibleBlinkDuration / blinkCycleDuration);
-
-                this.playerBlinkTween = this.tweens.add({
-                    targets: player,
-                    alpha: { from: 1, to: GameConfig.EFFECTS.BLINK_ALPHA },
-                    duration: blinkCycleDuration / 2,
-                    yoyo: true,
-                    repeat: invincibleBlinkCycles - 1,
-                    onComplete: () => {
-                        // 1s后取消无敌状态，恢复正常
-                        player.setAlpha(1);
-                        this.isInvincible = false;
-                        this.playerBlinkTween = null;
-                    }
-                });
-            }
+        // 玩家受击效果（闪烁 + 重生）
+        this.effectsManager.playerHitEffect(player, () => {
+            // 无敌状态结束
+            this.isInvincible = false;
         });
     }
 
@@ -500,27 +431,24 @@ class GameScene extends Phaser.Scene {
         this.physics.pause();
 
         // 停止背景音乐
-        if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
-            this.backgroundMusic.stop();
-        }
+        this.audioManager.stopBackgroundMusic();
 
-        // 清理玩家闪烁动画
-        if (this.playerBlinkTween) {
-            this.playerBlinkTween.stop();
-            this.playerBlinkTween = null;
-        }
+        // 清理玩家效果
+        this.effectsManager.stopPlayerEffects();
         // 恢复玩家可见性
         if (this.player) {
             this.player.setAlpha(1);
         }
 
         // 检查是否破纪录（当前分数 > 游戏开始时的最高分）
-        const isNewRecord = this.score > this.initialHighScore;
+        const currentScore = this.scoreManager.getScore();
+        const highScore = this.scoreManager.getHighScore();
+        const isNewRecord = this.scoreManager.shouldShowNewRecordAnimation();
 
         // 构建 Game Over 文本
         let gameOverMessage = 'GAME OVER\n';
-        gameOverMessage += 'Score: ' + this.score + '\n';
-        gameOverMessage += 'High Score: ' + this.highScore;
+        gameOverMessage += 'Score: ' + currentScore + '\n';
+        gameOverMessage += 'High Score: ' + highScore;
         if (isNewRecord) {
             gameOverMessage += '\n🎉 NEW RECORD! 🎉';
         }
@@ -546,15 +474,7 @@ class GameScene extends Phaser.Scene {
         );
     }
 
-    // ==================== 最高分系统 ====================
-
-    initHighScoreSystem() {
-        // 从 localStorage 读取最高分
-        const storedHighScore = parseInt(localStorage.getItem('highScore')) || 0;
-        this.initialHighScore = storedHighScore;  // 保存初始最高分
-        this.highScore = storedHighScore;
-        this.hasShownNewRecordAnimation = false;  // 控制动画是否已显示
-    }
+    // ==================== UI系统 ====================
 
     createUITexts() {
         // 顶部中央：波次显示
@@ -570,7 +490,7 @@ class GameScene extends Phaser.Scene {
         ).setOrigin(0.5, 0);
 
         // 左上角：最高分
-        this.highScoreText = this.add.text(10, 10, `High Score: ${this.highScore}`, {
+        this.highScoreText = this.add.text(10, 10, `High Score: ${this.scoreManager.getHighScore()}`, {
             fontSize: '20px',
             fill: '#ffd700'  // 金色
         });
@@ -589,66 +509,18 @@ class GameScene extends Phaser.Scene {
     }
 
     updateScore(points) {
-        this.score += points;
-        this.scoreText.setText('Score: ' + this.score);
+        const isNewHighScore = this.scoreManager.addScore(points);
+        this.scoreText.setText('Score: ' + this.scoreManager.getScore());
 
-        // 实时检查是否破纪录，持续更新最高分
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            this.highScoreText.setText(`High Score: ${this.highScore}`);
+        // 如果是新纪录，更新最高分显示
+        if (isNewHighScore) {
+            this.highScoreText.setText(`High Score: ${this.scoreManager.getHighScore()}`);
 
-            // 立即保存最高分到 localStorage（破纪录时保存）
-            localStorage.setItem('highScore', this.highScore.toString());
-
-            // 只显示一次动画
-            if (!this.hasShownNewRecordAnimation) {
-                this.hasShownNewRecordAnimation = true;
-                this.showNewRecordAnimation();
+            // 显示新纪录动画（只显示一次）
+            if (this.scoreManager.shouldShowNewRecordAnimation()) {
+                this.scoreManager.showNewRecordAnimation();
             }
         }
-    }
-
-    showNewRecordAnimation() {
-        // 在屏幕顶部中间显示破纪录提示（下移避免与Wave重叠）
-        const newRecordText = this.add.text(
-            this.cameras.main.width / 2,
-            100,
-            '⭐ NEW HIGH SCORE! ⭐',
-            {
-                fontSize: '40px',
-                fill: '#FFD700',
-                fontStyle: 'bold',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // 缩放 + 闪烁动画，1秒后消失
-        this.tweens.add({
-            targets: newRecordText,
-            scale: { from: 0.5, to: 1.0 },
-            duration: 200,
-            onComplete: () => {
-                // 闪烁效果
-                this.tweens.add({
-                    targets: newRecordText,
-                    alpha: { from: 1, to: 0.5 },
-                    duration: 100,
-                    yoyo: true,
-                    repeat: 3,
-                    onComplete: () => {
-                        // 淡出消失
-                        this.tweens.add({
-                            targets: newRecordText,
-                            alpha: 0,
-                            duration: 300,
-                            onComplete: () => {
-                                newRecordText.destroy();
-                            }
-                        });
-                    }
-                });
-            }
-        });
     }
 
     // ==================== 波次系统 ====================
@@ -658,28 +530,7 @@ class GameScene extends Phaser.Scene {
 
         // 显示波次切换动画
         const nextWave = this.currentWave + 1;
-        const waveAnnouncement = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            `WAVE ${nextWave}`,
-            {
-                fontSize: '60px',
-                fill: '#FFD700',
-                fontStyle: 'bold',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // 缩放 + 淡出动画
-        this.tweens.add({
-            targets: waveAnnouncement,
-            scale: { from: 0.5, to: 1.2 },
-            alpha: { from: 1, to: 0 },
-            duration: 1000,
-            onComplete: () => {
-                waveAnnouncement.destroy();
-            }
-        });
+        this.effectsManager.showWaveAnnouncement(nextWave);
 
         // 延迟后生成下一波
         this.time.delayedCall(GameConfig.WAVE.TRANSITION_DELAY, () => {
@@ -724,9 +575,7 @@ class GameScene extends Phaser.Scene {
         this.physics.pause();
 
         // 停止背景音乐
-        if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
-            this.backgroundMusic.pause();
-        }
+        this.audioManager.pauseBackgroundMusic();
 
         // 停止敌人射击定时器
         if (this.enemyFireTimer) {
@@ -752,7 +601,7 @@ class GameScene extends Phaser.Scene {
         this.statsText = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height / 2,
-            `Score: ${this.score}\nLives: ${this.lives}`,
+            `Score: ${this.scoreManager.getScore()}\nLives: ${this.lives}`,
             {
                 fontSize: '30px',
                 fill: '#fff',
@@ -810,9 +659,7 @@ class GameScene extends Phaser.Scene {
         this.physics.resume();
 
         // 恢复背景音乐
-        if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
-            this.backgroundMusic.resume();
-        }
+        this.audioManager.resumeBackgroundMusic();
 
         // 生成敌人
         this.spawnEnemies();
@@ -841,21 +688,20 @@ class GameScene extends Phaser.Scene {
     }
 
     shutdown() {
-        // 停止并销毁背景音乐（防止内存泄漏）
-        if (this.backgroundMusic) {
-            this.backgroundMusic.stop();
-            this.backgroundMusic.destroy();
+        // 清理管理器资源
+        if (this.audioManager) {
+            this.audioManager.shutdown();
+        }
+        if (this.scoreManager) {
+            this.scoreManager.shutdown();
+        }
+        if (this.effectsManager) {
+            this.effectsManager.shutdown();
         }
 
         // 停止敌人射击定时器
         if (this.enemyFireTimer) {
             this.enemyFireTimer.remove();
-        }
-
-        // 清理玩家闪烁动画（防止内存泄漏）
-        if (this.playerBlinkTween) {
-            this.playerBlinkTween.stop();
-            this.playerBlinkTween = null;
         }
 
         // 清理触摸事件监听器（防止内存泄漏）
