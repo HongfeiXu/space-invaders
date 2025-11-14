@@ -12,7 +12,8 @@ module.exports = {
     INITIAL_X: 400,       // Spawn position X
     INITIAL_Y: 550,       // Spawn position Y
     BULLET_SPEED: 400,    // Upward velocity of player bullets (px/s)
-    SHOOT_COOLDOWN: 250,  // Minimum delay between shots (ms)
+    SHOOT_COOLDOWN: 250,  // Minimum delay between shots (ms) - PC
+    MOBILE_SHOOT_COOLDOWN: 500,  // Minimum delay between shots (ms) - Mobile (auto-fire)
     HIT_BLINK_DURATION: 500,    // Duration of blink when hit (ms)
     INVINCIBLE_DURATION: 500,   // Duration of invincibility after respawn (ms)
     HIT_TEXT_DURATION: 500     // Duration of HIT! text display (ms)

@@ -126,11 +126,11 @@ class GameScene extends Phaser.Scene {
         this.isTouchLeft = false;
         this.isTouchRight = false;
 
-        // 检测是否为移动设备
-        const isMobileDevice = !this.sys.game.device.os.desktop;
+        // 检测是否为移动设备（保存为实例变量供 update() 使用）
+        this.isMobileDevice = !this.sys.game.device.os.desktop;
 
         // 只在移动设备上启用触摸控制
-        if (isMobileDevice) {
+        if (this.isMobileDevice) {
             // 保存事件处理器引用以便清理
             this.touchDownHandler = (pointer) => {
                 if (this.gameOver || this.isPaused) return;
@@ -296,9 +296,15 @@ class GameScene extends Phaser.Scene {
             this.player.setVelocityX(0);
         }
 
-        // 玩家射击 (移动端触摸自动射击)
-        if (this.spaceBar.isDown || this.isTouchLeft || this.isTouchRight) {
+        // 玩家射击
+        if (this.isMobileDevice) {
+            // 移动端：持续自动射击
             this.playerShoot();
+        } else {
+            // PC 端：按空格键射击
+            if (this.spaceBar.isDown) {
+                this.playerShoot();
+            }
         }
 
         // 移除超出屏幕的子弹
@@ -346,7 +352,12 @@ class GameScene extends Phaser.Scene {
         }
 
         const currentTime = this.time.now;
-        if (currentTime - this.lastShotTime > GameConfig.PLAYER.SHOOT_COOLDOWN) {
+        // 根据设备类型使用不同的射击冷却时间
+        const shootCooldown = this.isMobileDevice
+            ? GameConfig.PLAYER.MOBILE_SHOOT_COOLDOWN
+            : GameConfig.PLAYER.SHOOT_COOLDOWN;
+
+        if (currentTime - this.lastShotTime > shootCooldown) {
             const bullet = this.playerBullets.create(this.player.x, this.player.y - 10, 'playerBullet');
             bullet.setVelocityY(-GameConfig.PLAYER.BULLET_SPEED);
             this.lastShotTime = currentTime;
