@@ -19,105 +19,34 @@ npm run build  # 生产构建
 
 ---
 
-## 优先级 1: 代码质量 (1-2 小时)
+## ~~优先级 1: 代码质量~~ ✅ 已完成
 
-### 1.1 配置提取 → `src/config/GameConfig.js`
-**目标**: 消除代码中的魔法数字
+### ~~1.1 配置提取~~ ✅ 已完成（会话 3）
+**状态**: ✅ 已实现 `src/config/GameConfig.js`
 
-**当前魔法数字**:
-- 玩家速度: 250 px/s
-- 射击冷却: 250 ms
-- 敌人速度: ±50 px/s
-- 敌人射击间隔: 1000 ms
-- 敌人闪烁时长: 80 ms × 3 次
-- 得分/敌人: 10 分
-- 初始生命: 3 条
+详见 [`PROGRESS.md`](PROGRESS.md) 会话 3。
 
-**推荐实现**:
-```javascript
-// src/config/GameConfig.js
-module.exports = {
-  PLAYER_SPEED: 250,
-  SHOOT_COOLDOWN: 250,
-  ENEMY_SPEED: 50,
-  ENEMY_FIRE_INTERVAL: 1000,
-  BLINK_DURATION: 80,
-  POINTS_PER_ENEMY: 10,
-  INITIAL_LIVES: 3
-}
-```
+### ~~1.2 物体池优化~~ ❌ 已测试但不采用
 
-**收益**:
-- ✅ 参数一目了然
-- ✅ 便于平衡游戏难度
-- ✅ 易于测试不同配置
+**状态**: ❌ 经测试后决定不采用
 
-### 1.2 物体池优化 → 预创建和复用
-**当前问题**: 每次击中敌人或生成子弹都 `create` + `destroy`
+**原因**: 实测显示对象池反而增加内存占用（24.5 MB → 26.5 MB），且内存波动增大。详见 [`memos/OBJECT_POOL_OPTIMIZATION.md`](memos/OBJECT_POOL_OPTIMIZATION.md)。
 
-**优化方案**:
-```javascript
-// 在 create() 中预创建
-for (let i = 0; i < 100; i++) {
-  this.playerBullets.create(0, 0, 'playerBullet')
-    .setActive(false)
-    .setVisible(false)
-}
-
-// 射击时复用而不是创建
-const bullet = this.playerBullets.getFirstDead()
-if (bullet) {
-  bullet.setActive(true).setVisible(true)
-  bullet.setPosition(player.x, player.y)
-}
-```
-
-**收益**:
-- ✅ 减少 GC 压力
-- ✅ 可支持更多子弹
-- ✅ 性能提升 10-20%
+**结论**: 当前游戏规模下（15 个敌人，~30-50 个子弹），动态创建/销毁方式更优。
 
 ---
 
-## 优先级 2: 游戏功能 (2-3 小时)
+## ~~优先级 2: 游戏功能~~ ✅ 部分完成
 
-### 2.1 难度递增系统
-**特性**: 游戏进行越久，敌人越强
+### ~~2.1 难度递增系统~~ ✅ 已完成（会话 3）
+**状态**: ✅ 已通过波次系统实现
 
-**实现方式**:
-```javascript
-// 在 GameScene.create() 中
-this.difficulty = 1
-this.time.addEvent({
-  delay: 30000,  // 每 30 秒难度 +1
-  callback: () => {
-    this.difficulty++
-    // 敌人速度增加
-    this.enemies.children.entries.forEach(enemy => {
-      enemy.setVelocityX(enemy.velocityX * 1.1)
-    })
-  },
-  loop: true
-})
-```
+详见 [`PROGRESS.md`](PROGRESS.md) 会话 3 - 敌人射击间隔逐波递减。
 
-**效果**:
-- 敌人移动速度递增
-- 敌人射击频率递增
-- UI 显示当前难度
+### ~~2.2 多波次系统~~ ✅ 已完成（会话 3）
+**状态**: ✅ 已实现 5 波循环系统
 
-### 2.2 多波次系统 (Wave System)
-**特性**: 击败所有敌人后生成新一波，难度递增
-
-**伪代码**:
-```javascript
-checkWaveCleared() {
-  if (this.enemies.children.entries.length === 0) {
-    this.currentWave++
-    this.spawnEnemies()  // 生成数量更多或移动更快的敌人
-  }
-}
-```
+详见 [`PROGRESS.md`](PROGRESS.md) 会话 3 - Wave System 实现。
 
 ### 2.3 敌人 AI 优化 → 目标导向射击
 **当前**: 敌人随机射击
@@ -146,24 +75,22 @@ enemyShoot() {
 
 ---
 
-## 优先级 3: 音效和视觉 (1-2 小时)
+## 优先级 3: 音效和视觉
 
-### 3.1 音效系统
+### ~~3.1 背景音乐~~ ✅ 已完成（会话 3）
+**状态**: ✅ 已实现背景音乐循环播放和暂停控制
+
+详见 [`PROGRESS.md`](PROGRESS.md) 会话 3。
+
+### 3.1.1 SFX 音效系统（待实现）
 **需要的声音**:
-- 射击音 (玩家)
-- 击中音 (敌人被击中)
-- 爆炸音 (敌人销毁)
-- 背景音乐 (循环)
-- 游戏结束音
+- ❌ 射击音 (玩家)
+- ❌ 击中音 (敌人被击中)
+- ❌ 爆炸音 (敌人销毁)
+- ❌ 玩家被击中音
+- ❌ 游戏结束音
 
-**使用 Phaser Sound API**:
-```javascript
-// 在 PreloadScene
-this.load.audio('shoot', 'assets/shoot.mp3')
-
-// 在 GameScene
-this.sound.play('shoot')
-```
+**优先级**: 中
 
 ### 3.2 粒子效果
 **改进敌人被击中效果**:
@@ -173,21 +100,22 @@ this.sound.play('shoot')
 
 ---
 
-## 优先级 4: 玩家体验 (1.5-2 小时)
+## 优先级 4: 玩家体验
 
-### 4.1 高分记录 → localStorage
-**功能**:
-- 游戏结束时保存分数
-- 显示历史最高分
-- 本地持久化（不需要服务器）
+### ~~4.1 高分记录~~ ✅ 已完成（会话 3）
+**状态**: ✅ 已实现 localStorage 持久化 + 破纪录动画
 
-```javascript
-// 保存
-localStorage.setItem('highScore', this.score)
+详见 [`PROGRESS.md`](PROGRESS.md) 会话 3。
 
-// 读取
-const highScore = localStorage.getItem('highScore') || 0
-```
+### 4.1.1 玩家被击中反馈（待实现）
+**当前**: 玩家被击中时无视觉/听觉反馈
+**改进**: 添加反馈效果
+- ❌ 闪烁效果 + 短暂无敌时间
+- ❌ 屏幕闪白
+- ❌ 被击中音效
+- ❌ 屏幕震动
+
+**优先级**: 高
 
 ### 4.2 游戏菜单和场景
 **新增场景**:
@@ -196,11 +124,11 @@ const highScore = localStorage.getItem('highScore') || 0
 - **GameOverScene**: 游戏结束，显示分数和重启按钮
 
 ### 4.3 暂停菜单增强
-**当前**: 仅按 ESC 暂停/继续
+**当前**: ✅ 已部分实现 (ESC 暂停/继续 + R 重新开始)
 **改进**: 显示暂停菜单，可选：
-- 继续游戏
-- 重新开始
-- 返回主菜单
+- ✅ 继续游戏 (ESC)
+- ✅ 重新开始 (R 键)
+- ❌ 返回主菜单 (待实现)
 
 ---
 
@@ -247,47 +175,53 @@ const height = (width / 800) * 600
 
 ## 当前状态总结
 
-| 项 | 状态 | 优先级 |
-|---|------|--------|
-| 代码组织 | ✅ | 已完成 |
-| 配置提取 | ✅ | 已完成 |
-| 物体池 | ⏸️ | 暂置* |
-| 音效 | ✅ | 已完成 |
-| 难度递增 | ✅ | 已完成 (通过波次射击加速) |
-| 高分记录 | ✅ | 已完成 |
-| 波次系统 | ✅ | 已完成 |
-| 菜单系统 | ❌ | 中 |
-| 响应式设计 | ❌ | 低 |
-| Service Worker | ❌ | 低 |
-
-*物体池优化：测试表明反而增加内存占用（24.5→26.5MB），已记录教训于 `documentation/memos/OBJECT_POOL_OPTIMIZATION.md`
+| 项 | 状态 | 备注 |
+|---|------|------|
+| 配置提取 | ✅ 已完成 | 会话 3 |
+| 物体池优化 | ❌ 已测试不采用 | 反增内存（详见 memos） |
+| 背景音乐 | ✅ 已完成 | 会话 3 |
+| SFX 音效 | ❌ 待实现 | 优先级中 |
+| 难度递增 | ✅ 已完成 | 波次射击加速（会话 3） |
+| 高分记录 | ✅ 已完成 | localStorage + 动画（会话 3） |
+| 波次系统 | ✅ 已完成 | 5 波循环（会话 3） |
+| WASD 控制 | ✅ 已完成 | A/D 键（会话 4） |
+| 暂停重启 | ✅ 已完成 | R 键重启（会话 4） |
+| UI 布局优化 | ✅ 已完成 | 敌人位置居中（会话 4） |
+| 玩家被击中反馈 | ❌ 待实现 | **优先级高** |
+| 敌人 AI 优化 | ❌ 待实现 | 目标射击 |
+| 菜单系统 | ❌ 待实现 | 优先级中 |
+| 响应式设计 | ❌ 待实现 | 优先级低 |
+| Service Worker | ❌ 待实现 | 优先级低 |
 
 ---
 
 ## 性能基准
 
+**当前状态** (2025-11-14):
 ```
-当前代码量: 237 行 (GameScene.js)
-当前敌人数: 15 个 (可支持 50+)
-FPS: 60 稳定
+代码量: ~580 行 (GameScene.js)
+敌人数: 15 个 (可支持 50+)
+FPS: 60+ 稳定
+Peak Memory: ~24.5 MB (隐身模式测试)
 加载时间: ~2s (Phaser 库)
-热更新: ~30ms
+Bundle Size: 1.14 MB (已压缩)
 ```
 
-优化后预期:
-- 敌人数: 100+ (物体池优化)
-- 加载时间: ~1.5s (代码分割)
+**优化收益**:
+- ✅ 配置提取：代码可读性提升，易于调整
+- ✅ 波次系统：游戏可玩性提升
+- ✅ 高分记录：玩家留存率提升
 
 ---
 
-## 开发建议
+## 下一步推荐
 
-### 推荐开发顺序
-1. **配置提取** (快速胜利，改进代码质量)
-2. **物体池** (性能基础)
-3. **难度递增** (核心玩法)
-4. **音效系统** (提升体验)
-5. **高分记录** (完整度)
+### 优先实现顺序
+1. **玩家被击中反馈** (高优先级) - 提升打击感和体验
+2. **SFX 音效系统** (中优先级) - 完善音效体验
+3. **敌人 AI 优化** (中优先级) - 增加游戏挑战性
+4. **菜单系统** (中优先级) - 完善游戏流程
+5. **粒子效果** (低优先级) - 视觉优化
 
 ### 测试方法
 ```bash
@@ -331,4 +265,4 @@ git push origin main
 - [ ] 定期 commit 保持 git 历史清晰
 - [ ] 功能完成后更新此计划文档
 
-*最后更新: 2025-11-12*
+*最后更新: 2025-11-14*

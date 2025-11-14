@@ -29,8 +29,8 @@ module.exports = {
     COLS: 5,              // Number of enemy columns
     SPACING_X: 80,        // Horizontal spacing between enemies (px)
     SPACING_Y: 60,        // Vertical spacing between enemies (px)
-    START_X: 100,         // X position of first enemy
-    START_Y: 50           // Y position of first enemy
+    START_X: 260,         // X position of first enemy (centered on 800px canvas)
+    START_Y: 85           // Y position of first enemy (避免与顶部 UI 重叠)
   },
 
   // Visual effects

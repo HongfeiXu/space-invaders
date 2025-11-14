@@ -65,13 +65,19 @@ class GameScene extends Phaser.Scene {
         this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
+        // WASD 键控制
+        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
         // ESC 键暂停游戏
         this.input.keyboard.on('keydown-ESC', () => {
             this.togglePause();
         });
 
         // 暂停提示文本
-        this.pauseText = this.add.text(400, 300, 'PAUSED\n\nPress ESC to Resume', {
+        this.pauseText = this.add.text(400, 300, 'PAUSED\n\nPress ESC to Resume\nPress R to Restart', {
             fontSize: '40px',
             fill: '#fff',
             align: 'center'
@@ -110,6 +116,10 @@ class GameScene extends Phaser.Scene {
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = true;
             }
+            // 添加 R 键重启监听器
+            this.restartKeyListener = this.input.keyboard.on('keydown-R', () => {
+                this.scene.restart();
+            });
         } else {
             this.physics.resume();
             this.pauseText.setVisible(false);
@@ -120,6 +130,11 @@ class GameScene extends Phaser.Scene {
             // 恢复敌人射击定时器
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = false;
+            }
+            // 移除 R 键重启监听器
+            if (this.restartKeyListener) {
+                this.input.keyboard.off('keydown-R', this.restartKeyListener);
+                this.restartKeyListener = null;
             }
         }
     }
@@ -132,10 +147,10 @@ class GameScene extends Phaser.Scene {
 
         if (this.gameOver || this.isPaused) return;
 
-        // 玩家移动控制
-        if (this.cursors.left.isDown) {
+        // 玩家移动控制 (支持方向键和 WASD)
+        if (this.cursors.left.isDown || this.keyA.isDown) {
             this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
-        } else if (this.cursors.right.isDown) {
+        } else if (this.cursors.right.isDown || this.keyD.isDown) {
             this.player.setVelocityX(GameConfig.PLAYER.SPEED);
         } else {
             this.player.setVelocityX(0);

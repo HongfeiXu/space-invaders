@@ -359,3 +359,95 @@ this.time.addEvent({ delay: GameConfig.ENEMY.FIRE_INTERVAL, ... })
 
 *会话 3 更新: 2025-11-12*
 *配置提取完成，代码质量改进*
+
+---
+
+## 会话 4 - 用户体验优化
+
+**时间**: 2025-11-14
+**成果**: WASD 键支持、敌人位置优化、暂停菜单增强
+
+### 完成的任务
+
+#### 1.1 WASD 键控制支持 ✅
+- **修改**: `src/scenes/GameScene.js`（第 68-72 行，第 142-145 行）
+- **新增**: A/D 键控制玩家左右移动
+- **兼容**: 保留方向键控制，两种方式并存
+
+**代码实现**:
+```javascript
+// 注册 WASD 键
+this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+// 移动控制逻辑
+if (this.cursors.left.isDown || this.keyA.isDown) {
+    this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
+} else if (this.cursors.right.isDown || this.keyD.isDown) {
+    this.player.setVelocityX(GameConfig.PLAYER.SPEED);
+}
+```
+
+#### 1.2 敌人生成位置优化 ✅
+- **修改**: `src/config/GameConfig.js`（第 32-33 行）
+- **调整**:
+  - `START_X`: 100 → 260（敌人阵列水平居中）
+  - `START_Y`: 50 → 85（下移避免与顶部 UI 重叠）
+
+**调整原因**:
+- 画布宽度 800px，敌人阵列宽度 320px（5列 × 80px间距）
+- 居中位置：400 - 160 = 240，考虑边距调整为 260
+- 原 START_Y=50 与顶部 WAVE 文本（15px 处）距离过近
+
+#### 1.3 暂停菜单增强 ✅
+- **修改**: `src/scenes/GameScene.js`（第 80-84 行，第 120-138 行）
+- **新增**: 暂停时按 R 键重启游戏功能
+- **优化**: 动态添加/移除 R 键监听器，避免内存泄漏
+
+**功能实现**:
+```javascript
+// 暂停文本更新
+this.pauseText = this.add.text(400, 300,
+    'PAUSED\n\nPress ESC to Resume\nPress R to Restart',
+    { fontSize: '40px', fill: '#fff', align: 'center' }
+).setOrigin(0.5).setVisible(false);
+
+// 暂停时添加 R 键监听
+if (this.isPaused) {
+    this.restartKeyListener = this.input.keyboard.on('keydown-R', () => {
+        this.scene.restart();
+    });
+}
+
+// 恢复时移除监听器
+if (!this.isPaused && this.restartKeyListener) {
+    this.input.keyboard.off('keydown-R', this.restartKeyListener);
+    this.restartKeyListener = null;
+}
+```
+
+### 用户体验改进
+
+| 改进项 | 之前 | 之后 |
+|--------|------|------|
+| **键位选择** | 仅方向键 | 方向键 + WASD |
+| **敌人位置** | 偏左上（100, 50） | 居中（260, 85） |
+| **暂停选项** | 仅恢复 | 恢复 + 重启 |
+
+### 技术亮点
+
+1. **键盘事件管理**：动态添加/移除监听器，防止内存泄漏
+2. **配置驱动**：通过 GameConfig 调整参数，无需修改游戏逻辑
+3. **向下兼容**：所有新增功能不影响现有操作方式
+
+### 下一步方向
+
+推荐优先级：
+1. **玩家被击中反馈** - 视觉/听觉效果提升打击感
+2. **音效系统完善** - 添加各类 SFX 音效
+3. **移动端支持** - 触摸控制适配
+
+---
+
+*会话 4 更新: 2025-11-14*
+*用户体验优化完成*
