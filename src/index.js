@@ -10,7 +10,7 @@ class PreloadScene extends Phaser.Scene {
     preload() {
         // 预加载音频文件
         // 背景音乐来自: Eric Matyas (www.soundimage.org)
-        this.load.audio('backgroundMusic', '/assets/audio/Jewel-Thieves.mp3');
+        this.load.audio('backgroundMusic', 'assets/audio/Jewel-Thieves.mp3');
     }
 
     create() {
