@@ -16,6 +16,11 @@ class GameScene extends Phaser.Scene {
         this.gameOver = false;
         this.isPaused = false;
 
+        // 波次系统变量
+        this.currentWave = GameConfig.WAVE.INITIAL_WAVE;
+        this.isTransitioning = false;
+        this.isVictoryScreen = false;
+
         // 注册 shutdown 事件以清理资源
         // 说明：this.scene.restart() 时触发此事件，在重新调用 create() 之前
         this.events.on('shutdown', this.shutdown, this);
@@ -154,9 +159,13 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // 检查敌人是否全部消灭
-        if (this.enemies.children.entries.length === 0) {
-            this.spawnEnemies();
+        // 检查敌人是否全部消灭（波次系统）
+        if (this.enemies.children.entries.length === 0 && !this.isTransitioning && !this.isVictoryScreen) {
+            if (this.currentWave < GameConfig.WAVE.MAX_WAVE) {
+                this.startWaveTransition();
+            } else {
+                this.showVictoryScreen();
+            }
         }
     }
 
@@ -293,6 +302,18 @@ class GameScene extends Phaser.Scene {
     }
 
     createUITexts() {
+        // 顶部中央：波次显示
+        this.waveText = this.add.text(
+            this.cameras.main.width / 2,
+            15,
+            `WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`,
+            {
+                fontSize: '28px',
+                fill: '#ffd700',  // 金色
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5, 0);
+
         // 左上角：最高分
         this.highScoreText = this.add.text(10, 10, `High Score: ${this.highScore}`, {
             fontSize: '20px',
@@ -330,10 +351,10 @@ class GameScene extends Phaser.Scene {
     }
 
     showNewRecordAnimation() {
-        // 在屏幕顶部中间显示破纪录提示
+        // 在屏幕顶部中间显示破纪录提示（下移避免与Wave重叠）
         const newRecordText = this.add.text(
             this.cameras.main.width / 2,
-            50,
+            100,
             '⭐ NEW HIGH SCORE! ⭐',
             {
                 fontSize: '40px',
@@ -370,6 +391,165 @@ class GameScene extends Phaser.Scene {
                 });
             }
         });
+    }
+
+    // ==================== 波次系统 ====================
+
+    startWaveTransition() {
+        this.isTransitioning = true;
+
+        // 显示波次切换动画
+        const nextWave = this.currentWave + 1;
+        const waveAnnouncement = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            `WAVE ${nextWave}`,
+            {
+                fontSize: '60px',
+                fill: '#FFD700',
+                fontStyle: 'bold',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        // 缩放 + 淡出动画
+        this.tweens.add({
+            targets: waveAnnouncement,
+            scale: { from: 0.5, to: 1.2 },
+            alpha: { from: 1, to: 0 },
+            duration: 1000,
+            onComplete: () => {
+                waveAnnouncement.destroy();
+            }
+        });
+
+        // 延迟后生成下一波
+        this.time.delayedCall(GameConfig.WAVE.TRANSITION_DELAY, () => {
+            this.spawnNextWave();
+        });
+    }
+
+    spawnNextWave() {
+        // 增加波次
+        this.currentWave++;
+
+        // 更新 UI
+        this.waveText.setText(`WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`);
+
+        // 计算新的敌人射击间隔（逐波递减）
+        const baseInterval = GameConfig.ENEMY.FIRE_INTERVAL;
+        const newInterval = Math.max(
+            baseInterval * Math.pow(GameConfig.WAVE.FIRE_RATE_MULTIPLIER, this.currentWave - 1),
+            GameConfig.WAVE.MIN_FIRE_INTERVAL
+        );
+
+        // 更新射击定时器
+        if (this.enemyFireTimer) {
+            this.enemyFireTimer.remove();
+        }
+        this.enemyFireTimer = this.time.addEvent({
+            delay: newInterval,
+            callback: this.enemyShoot,
+            callbackScope: this,
+            loop: true
+        });
+
+        // 生成敌人
+        this.spawnEnemies();
+
+        // 结束切换状态
+        this.isTransitioning = false;
+    }
+
+    showVictoryScreen() {
+        this.isVictoryScreen = true;
+        this.physics.pause();
+
+        // 停止背景音乐
+        if (this.backgroundMusic && this.backgroundMusic.isPlaying) {
+            this.backgroundMusic.pause();
+        }
+
+        // 停止敌人射击定时器
+        if (this.enemyFireTimer) {
+            this.enemyFireTimer.paused = true;
+        }
+
+        // 显示通关信息
+        const victoryTitle = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 - 100,
+            '🎉 恭喜通关！🎉',
+            {
+                fontSize: '50px',
+                fill: '#FFD700',
+                fontStyle: 'bold',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        const statsText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            `Score: ${this.score}\nLives: ${this.lives}`,
+            {
+                fontSize: '30px',
+                fill: '#fff',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        const continueHint = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 100,
+            'Press SPACE to Continue\n(Restart from Wave 1)',
+            {
+                fontSize: '20px',
+                fill: '#aaa',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        // 监听 SPACE 键继续
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.restartWaveCycle();
+            victoryTitle.destroy();
+            statsText.destroy();
+            continueHint.destroy();
+        });
+    }
+
+    restartWaveCycle() {
+        // 重置波次为 1
+        this.currentWave = GameConfig.WAVE.INITIAL_WAVE;
+        this.waveText.setText(`WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`);
+
+        // 重置射击间隔为初始值
+        if (this.enemyFireTimer) {
+            this.enemyFireTimer.remove();
+        }
+        this.enemyFireTimer = this.time.addEvent({
+            delay: GameConfig.ENEMY.FIRE_INTERVAL,
+            callback: this.enemyShoot,
+            callbackScope: this,
+            loop: true
+        });
+
+        // 保留分数和生命（不重置！）
+        // this.score 保持
+        // this.lives 保持
+
+        // 恢复游戏
+        this.isVictoryScreen = false;
+        this.physics.resume();
+
+        // 恢复背景音乐
+        if (this.backgroundMusic && !this.backgroundMusic.isPlaying) {
+            this.backgroundMusic.resume();
+        }
+
+        // 生成敌人
+        this.spawnEnemies();
     }
 
     // ==================== 生命周期管理 ====================

@@ -57,5 +57,14 @@ module.exports = {
   AUDIO: {
     BACKGROUND_MUSIC_VOLUME: 0.5,  // Background music volume (0.0-1.0)
     BACKGROUND_MUSIC_LOOP: true    // Background music loops
+  },
+
+  // Wave system configuration
+  WAVE: {
+    INITIAL_WAVE: 1,           // Starting wave number
+    MAX_WAVE: 5,               // Maximum wave (victory after this)
+    FIRE_RATE_MULTIPLIER: 0.85, // Enemy fire interval reduction per wave
+    MIN_FIRE_INTERVAL: 400,    // Minimum enemy fire interval (ms)
+    TRANSITION_DELAY: 2000     // Delay before spawning next wave (ms)
   }
 };
