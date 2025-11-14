@@ -21,6 +21,10 @@ class GameScene extends Phaser.Scene {
         this.isTransitioning = false;
         this.isVictoryScreen = false;
 
+        // 玩家无敌状态管理
+        this.isInvincible = false;
+        this.playerBlinkTween = null;
+
         // 注册 shutdown 事件以清理资源
         // 说明：this.scene.restart() 时触发此事件，在重新调用 create() 之前
         this.events.on('shutdown', this.shutdown, this);
@@ -239,21 +243,109 @@ class GameScene extends Phaser.Scene {
         this.updateScore(GameConfig.GAME.POINTS_PER_ENEMY);
     }
 
-    hitPlayer(player, bullet) {
-        // 只有敌人子弹会伤害玩家
-        if (bullet.texture.key === 'enemyBullet') {
-            bullet.destroy();
-            this.lives--;
-            this.livesText.setText('Lives: ' + this.lives);
+    hitPlayer(player, bulletOrEnemy) {
+        // 如果玩家处于无敌状态，忽略伤害
+        if (this.isInvincible) {
+            return;
+        }
 
-            if (this.lives <= 0) {
-                this.endGame();
-            } else {
-                // 重置玩家位置
+        // 检查 bulletOrEnemy 是否存在
+        if (!bulletOrEnemy) {
+            return;
+        }
+
+        // 检查是子弹还是敌人直接碰撞
+        const isBullet = bulletOrEnemy.texture && bulletOrEnemy.texture.key === 'enemyBullet';
+        const isEnemy = bulletOrEnemy.texture && bulletOrEnemy.texture.key === 'enemy';
+
+        // 只有敌人子弹或敌人直接碰撞才会伤害玩家
+        if (!isBullet && !isEnemy) {
+            return;
+        }
+
+        // 销毁子弹（如果是子弹）
+        if (isBullet) {
+            bulletOrEnemy.destroy();
+        }
+
+        // 减少生命值
+        this.lives--;
+        this.livesText.setText('Lives: ' + this.lives);
+
+        // 如果生命值归零，游戏结束
+        if (this.lives <= 0) {
+            this.endGame();
+            return;
+        }
+
+        // 设置无敌状态，防止重复触发
+        this.isInvincible = true;
+
+        // 显示 HIT! 文字
+        const hitText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            'HIT!',
+            {
+                fontSize: '60px',
+                fill: '#ff0000',
+                fontStyle: 'bold',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
+        // HIT! 文字在指定时间后消失
+        this.time.delayedCall(GameConfig.PLAYER.HIT_TEXT_DURATION, () => {
+            if (hitText && hitText.active) {
+                hitText.destroy();
+            }
+        });
+
+        // 清理之前的闪烁动画（如果存在）
+        if (this.playerBlinkTween) {
+            this.playerBlinkTween.stop();
+            this.playerBlinkTween = null;
+        }
+
+        // 确保玩家可见
+        player.setAlpha(1);
+
+        // 第一次闪烁（被击中时，0.5s）
+        const blinkDuration = GameConfig.PLAYER.HIT_BLINK_DURATION;
+        const blinkCycleDuration = GameConfig.EFFECTS.BLINK_CYCLE_DURATION;
+        const blinkCycles = Math.floor(blinkDuration / blinkCycleDuration);
+
+        this.playerBlinkTween = this.tweens.add({
+            targets: player,
+            alpha: { from: 1, to: GameConfig.EFFECTS.BLINK_ALPHA },
+            duration: blinkCycleDuration / 2,
+            yoyo: true,
+            repeat: blinkCycles - 1,
+            onComplete: () => {
+                // 0.5s后重生
                 player.setPosition(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y);
                 player.setVelocity(0, 0);
+                player.setAlpha(1);
+
+                // 继续闪烁（重生后无敌期间，0.5s）
+                const invincibleBlinkDuration = GameConfig.PLAYER.INVINCIBLE_DURATION;
+                const invincibleBlinkCycles = Math.floor(invincibleBlinkDuration / blinkCycleDuration);
+
+                this.playerBlinkTween = this.tweens.add({
+                    targets: player,
+                    alpha: { from: 1, to: GameConfig.EFFECTS.BLINK_ALPHA },
+                    duration: blinkCycleDuration / 2,
+                    yoyo: true,
+                    repeat: invincibleBlinkCycles - 1,
+                    onComplete: () => {
+                        // 1s后取消无敌状态，恢复正常
+                        player.setAlpha(1);
+                        this.isInvincible = false;
+                        this.playerBlinkTween = null;
+                    }
+                });
             }
-        }
+        });
     }
 
     endGame() {
@@ -265,11 +357,18 @@ class GameScene extends Phaser.Scene {
             this.backgroundMusic.stop();
         }
 
-        // 保存最高分到 localStorage
-        localStorage.setItem('highScore', this.highScore.toString());
+        // 清理玩家闪烁动画
+        if (this.playerBlinkTween) {
+            this.playerBlinkTween.stop();
+            this.playerBlinkTween = null;
+        }
+        // 恢复玩家可见性
+        if (this.player) {
+            this.player.setAlpha(1);
+        }
 
         // 检查是否破纪录（当前分数 > 游戏开始时的最高分）
-        const isNewRecord = this.hasShownNewRecordAnimation;
+        const isNewRecord = this.score > this.initialHighScore;
 
         // 构建 Game Over 文本
         let gameOverMessage = 'GAME OVER\n';
@@ -312,7 +411,9 @@ class GameScene extends Phaser.Scene {
 
     initHighScoreSystem() {
         // 从 localStorage 读取最高分
-        this.highScore = parseInt(localStorage.getItem('highScore')) || 0;
+        const storedHighScore = parseInt(localStorage.getItem('highScore')) || 0;
+        this.initialHighScore = storedHighScore;  // 保存初始最高分
+        this.highScore = storedHighScore;
         this.hasShownNewRecordAnimation = false;  // 控制动画是否已显示
     }
 
@@ -356,6 +457,9 @@ class GameScene extends Phaser.Scene {
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.highScoreText.setText(`High Score: ${this.highScore}`);
+
+            // 立即保存最高分到 localStorage（破纪录时保存）
+            localStorage.setItem('highScore', this.highScore.toString());
 
             // 只显示一次动画
             if (!this.hasShownNewRecordAnimation) {
@@ -490,8 +594,11 @@ class GameScene extends Phaser.Scene {
             this.enemyFireTimer.paused = true;
         }
 
+        // 清理之前的通关文本（如果存在）
+        this.cleanupVictoryTexts();
+
         // 显示通关信息
-        const victoryTitle = this.add.text(
+        this.victoryTitle = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height / 2 - 100,
             '🎉 恭喜通关！🎉',
@@ -503,7 +610,7 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        const statsText = this.add.text(
+        this.statsText = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height / 2,
             `Score: ${this.score}\nLives: ${this.lives}`,
@@ -514,7 +621,7 @@ class GameScene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        const continueHint = this.add.text(
+        this.continueHint = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height / 2 + 100,
             'Press SPACE to Continue\n(Restart from Wave 1)',
@@ -528,13 +635,13 @@ class GameScene extends Phaser.Scene {
         // 监听 SPACE 键继续
         this.input.keyboard.once('keydown-SPACE', () => {
             this.restartWaveCycle();
-            victoryTitle.destroy();
-            statsText.destroy();
-            continueHint.destroy();
         });
     }
 
     restartWaveCycle() {
+        // 清理通关文本
+        this.cleanupVictoryTexts();
+
         // 重置波次为 1
         this.currentWave = GameConfig.WAVE.INITIAL_WAVE;
         this.waveText.setText(`WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`);
@@ -569,6 +676,22 @@ class GameScene extends Phaser.Scene {
 
     // ==================== 生命周期管理 ====================
 
+    cleanupVictoryTexts() {
+        // 清理通关文本对象（防止内存泄漏）
+        if (this.victoryTitle) {
+            this.victoryTitle.destroy();
+            this.victoryTitle = null;
+        }
+        if (this.statsText) {
+            this.statsText.destroy();
+            this.statsText = null;
+        }
+        if (this.continueHint) {
+            this.continueHint.destroy();
+            this.continueHint = null;
+        }
+    }
+
     shutdown() {
         // 停止并销毁背景音乐（防止内存泄漏）
         if (this.backgroundMusic) {
@@ -580,6 +703,16 @@ class GameScene extends Phaser.Scene {
         if (this.enemyFireTimer) {
             this.enemyFireTimer.remove();
         }
+
+        // 清理玩家闪烁动画（防止内存泄漏）
+        if (this.playerBlinkTween) {
+            this.playerBlinkTween.stop();
+            this.playerBlinkTween = null;
+        }
+
+        // 清理通关文本对象
+        this.cleanupVictoryTexts();
+
         // 移除事件监听器
         this.events.off('shutdown', this.shutdown, this);
     }

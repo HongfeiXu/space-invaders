@@ -12,7 +12,10 @@ module.exports = {
     INITIAL_X: 400,       // Spawn position X
     INITIAL_Y: 550,       // Spawn position Y
     BULLET_SPEED: 400,    // Upward velocity of player bullets (px/s)
-    SHOOT_COOLDOWN: 250   // Minimum delay between shots (ms)
+    SHOOT_COOLDOWN: 250,  // Minimum delay between shots (ms)
+    HIT_BLINK_DURATION: 500,    // Duration of blink when hit (ms)
+    INVINCIBLE_DURATION: 500,   // Duration of invincibility after respawn (ms)
+    HIT_TEXT_DURATION: 500     // Duration of HIT! text display (ms)
   },
 
   // Enemy configuration
@@ -35,9 +38,10 @@ module.exports = {
 
   // Visual effects
   EFFECTS: {
-    BLINK_ALPHA: 0.3,     // Transparency when hit (0.0-1.0)
-    BLINK_DURATION: 80,   // Duration of each blink (ms)
-    BLINK_REPEAT: 3       // Number of blink cycles
+    BLINK_ALPHA: 0.3,           // Transparency when hit (0.0-1.0)
+    BLINK_DURATION: 80,         // Duration of each blink (ms)
+    BLINK_REPEAT: 3,            // Number of blink cycles
+    BLINK_CYCLE_DURATION: 50    // Duration of each blink cycle (ms)
   },
 
   // Game rules
