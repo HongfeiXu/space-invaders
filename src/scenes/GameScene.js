@@ -102,6 +102,25 @@ class GameScene extends Phaser.Scene {
             loop: GameConfig.AUDIO.BACKGROUND_MUSIC_LOOP,
             volume: GameConfig.AUDIO.BACKGROUND_MUSIC_VOLUME
         });
+
+        // 触摸控制（移动端适配）
+        this.isTouchLeft = false;
+        this.isTouchRight = false;
+
+        this.input.on('pointerdown', (pointer) => {
+            if (this.gameOver || this.isPaused) return;
+            const halfWidth = this.cameras.main.width / 2;
+            if (pointer.x < halfWidth) {
+                this.isTouchLeft = true;
+            } else {
+                this.isTouchRight = true;
+            }
+        });
+
+        this.input.on('pointerup', () => {
+            this.isTouchLeft = false;
+            this.isTouchRight = false;
+        });
     }
 
     togglePause() {
@@ -151,17 +170,17 @@ class GameScene extends Phaser.Scene {
 
         if (this.gameOver || this.isPaused) return;
 
-        // 玩家移动控制 (支持方向键和 WASD)
-        if (this.cursors.left.isDown || this.keyA.isDown) {
+        // 玩家移动控制 (支持方向键、WASD 和触摸)
+        if (this.cursors.left.isDown || this.keyA.isDown || this.isTouchLeft) {
             this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
-        } else if (this.cursors.right.isDown || this.keyD.isDown) {
+        } else if (this.cursors.right.isDown || this.keyD.isDown || this.isTouchRight) {
             this.player.setVelocityX(GameConfig.PLAYER.SPEED);
         } else {
             this.player.setVelocityX(0);
         }
 
-        // 玩家射击
-        if (this.spaceBar.isDown) {
+        // 玩家射击 (移动端触摸自动射击)
+        if (this.spaceBar.isDown || this.isTouchLeft || this.isTouchRight) {
             this.playerShoot();
         }
 
