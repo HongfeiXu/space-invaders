@@ -451,3 +451,142 @@ if (!this.isPaused && this.restartKeyListener) {
 
 *会话 4 更新: 2025-11-14*
 *用户体验优化完成*
+
+---
+
+## 会话 4.5 - 玩家被击中反馈与代码质量改进
+
+**时间**: 2025-11-14
+**成果**: 实现完整的玩家被击中反馈系统、优化最高分保存逻辑、代码质量改进
+
+### 完成的任务
+
+#### 1.1 玩家被击中反馈系统 ✅
+- **修改**: `src/scenes/GameScene.js`（第 246-347 行）
+- **新增功能**:
+  - 无敌状态管理（击中后 1 秒无敌时间）
+  - 红色 "HIT!" 文字提示（0.5 秒）
+  - 两段闪烁动画（击中 0.5s + 重生无敌 0.5s）
+  - 支持敌人直接碰撞伤害
+
+**实现细节**:
+```javascript
+// 无敌状态管理
+this.isInvincible = false;
+this.playerBlinkTween = null;
+
+// 被击中时
+hitPlayer(player, bulletOrEnemy) {
+    if (this.isInvincible) return;  // 无敌时忽略伤害
+
+    // 显示 HIT! 文字
+    const hitText = this.add.text(..., 'HIT!', { fontSize: '60px', fill: '#ff0000' });
+
+    // 第一段闪烁（被击中，0.5s）
+    this.tweens.add({
+        targets: player,
+        alpha: { from: 1, to: 0.3 },
+        duration: 25,
+        yoyo: true,
+        repeat: 9,
+        onComplete: () => {
+            // 重生后第二段闪烁（无敌期间，0.5s）
+            player.setPosition(INITIAL_X, INITIAL_Y);
+            this.tweens.add({ ... });
+        }
+    });
+}
+```
+
+**配置参数** (`src/config/GameConfig.js`):
+```javascript
+PLAYER: {
+    HIT_BLINK_DURATION: 500,    // 被击中闪烁时长
+    INVINCIBLE_DURATION: 500,   // 无敌时长
+    HIT_TEXT_DURATION: 500      // HIT! 文字显示时长
+}
+EFFECTS: {
+    BLINK_CYCLE_DURATION: 50    // 每次闪烁周期时长
+}
+```
+
+#### 1.2 最高分保存逻辑优化 ✅
+- **修改**: `src/scenes/GameScene.js`（第 413-417 行，第 458-462 行，第 370 行）
+- **问题修复**:
+  - **旧逻辑**：仅在游戏结束时保存，导致游戏崩溃/刷新时丢失破纪录
+  - **新逻辑**：破纪录时立即保存到 localStorage
+
+**改进前后对比**:
+```javascript
+// 之前：仅在 endGame() 保存
+endGame() {
+    localStorage.setItem('highScore', this.highScore);  // 可能漏保存
+}
+
+// 之后：破纪录时立即保存
+updateScore(points) {
+    if (this.score > this.highScore) {
+        this.highScore = this.score;
+        localStorage.setItem('highScore', this.highScore);  // ✅ 立即保存
+    }
+}
+
+// 新增 initialHighScore 记录游戏开始时的最高分
+initHighScoreSystem() {
+    this.initialHighScore = parseInt(localStorage.getItem('highScore')) || 0;
+    this.highScore = this.initialHighScore;
+}
+
+// 游戏结束时正确判断是否破纪录
+endGame() {
+    const isNewRecord = this.score > this.initialHighScore;  // ✅ 正确判断
+}
+```
+
+#### 1.3 代码质量改进 ✅
+- **新增**: `cleanupVictoryTexts()` 方法（第 679-693 行）
+- **优化**: `shutdown()` 方法增强清理逻辑（第 696-718 行）
+- **优化**: `endGame()` 清理玩家闪烁动画（第 360-368 行）
+
+**改进点**:
+1. **内存泄漏防护**：
+   - 清理通关文本对象（victoryTitle, statsText, continueHint）
+   - 清理玩家闪烁动画（playerBlinkTween）
+   - 在 `shutdown()` 中统一清理资源
+
+2. **代码复用**：
+   - 提取 `cleanupVictoryTexts()` 避免重复代码
+   - `restartWaveCycle()` 和 `shutdown()` 复用清理方法
+
+### 用户体验改进
+
+| 改进项 | 之前 | 之后 |
+|--------|------|------|
+| **被击中反馈** | 无视觉反馈，直接扣血 | HIT! 文字 + 闪烁动画 + 无敌时间 |
+| **最高分保存** | 仅游戏结束时保存 | 破纪录时立即保存 |
+| **内存管理** | 部分资源未清理 | 完整的资源清理机制 |
+
+### 技术亮点
+
+1. **状态机设计**：无敌状态通过 `isInvincible` 标志管理，防止重复伤害
+2. **动画分段**：两段闪烁动画通过 `onComplete` 回调串联
+3. **配置驱动**：所有时长参数提取到 GameConfig
+4. **防御性编程**：`hitPlayer()` 中多重判断确保安全性
+5. **资源管理**：统一的清理方法防止内存泄漏
+
+### 已知问题与改进空间
+
+**当前实现**:
+- ✅ 视觉反馈完整（文字 + 闪烁）
+- ❌ 缺少音效（被击中音效待实现）
+- ❌ 缺少屏幕震动效果（可选）
+
+**下一步方向**:
+1. **SFX 音效系统** - 添加被击中音效
+2. **屏幕震动** - 增强打击感
+3. **粒子效果** - 爆炸粒子（可选）
+
+---
+
+*会话 4.5 更新: 2025-11-14*
+*玩家被击中反馈系统完成，代码质量改进*
