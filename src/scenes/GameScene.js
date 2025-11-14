@@ -107,7 +107,8 @@ class GameScene extends Phaser.Scene {
         this.isTouchLeft = false;
         this.isTouchRight = false;
 
-        this.input.on('pointerdown', (pointer) => {
+        // 保存事件处理器引用以便清理
+        this.touchDownHandler = (pointer) => {
             if (this.gameOver || this.isPaused) return;
             const halfWidth = this.cameras.main.width / 2;
             if (pointer.x < halfWidth) {
@@ -115,12 +116,15 @@ class GameScene extends Phaser.Scene {
             } else {
                 this.isTouchRight = true;
             }
-        });
+        };
 
-        this.input.on('pointerup', () => {
+        this.touchUpHandler = () => {
             this.isTouchLeft = false;
             this.isTouchRight = false;
-        });
+        };
+
+        this.input.on('pointerdown', this.touchDownHandler);
+        this.input.on('pointerup', this.touchUpHandler);
     }
 
     togglePause() {
@@ -727,6 +731,16 @@ class GameScene extends Phaser.Scene {
         if (this.playerBlinkTween) {
             this.playerBlinkTween.stop();
             this.playerBlinkTween = null;
+        }
+
+        // 清理触摸事件监听器（防止内存泄漏）
+        if (this.touchDownHandler) {
+            this.input.off('pointerdown', this.touchDownHandler);
+            this.touchDownHandler = null;
+        }
+        if (this.touchUpHandler) {
+            this.input.off('pointerup', this.touchUpHandler);
+            this.touchUpHandler = null;
         }
 
         // 清理通关文本对象
