@@ -36,6 +36,16 @@ class UIManager {
         this.continueButton = null;
         this.continueHint = null;
 
+        // Virtual buttons (mobile only)
+        this.virtualButtons = {
+            left: null,
+            right: null
+        };
+        this.virtualButtonStates = {
+            left: false,
+            right: false
+        };
+
         // Initialize HUD
         this.createHUD();
     }
@@ -146,6 +156,9 @@ class UIManager {
                 fontSize: '20px'
             }
         );
+
+        // Create virtual buttons for mobile
+        this.createVirtualButtons();
     }
 
     /**
@@ -220,6 +233,116 @@ class UIManager {
         });
 
         return container;
+    }
+
+    /**
+     * Create virtual control buttons for mobile devices
+     * Extensible design: easily add more buttons by configuring in GameConfig
+     */
+    createVirtualButtons() {
+        const btnConfig = GameConfig.UI.VIRTUAL_BUTTONS;
+
+        // Only create on mobile if enabled
+        if (!btnConfig.ENABLED) {
+            return;
+        }
+
+        // Check if mobile device
+        const isMobile = !this.scene.sys.game.device.os.desktop;
+        if (!isMobile) {
+            return; // Skip on desktop
+        }
+
+        // Create Left button
+        this.virtualButtons.left = this.createVirtualButton(
+            btnConfig.LEFT_BUTTON.X,
+            btnConfig.BUTTON_Y,
+            btnConfig.LEFT_BUTTON.LABEL,
+            'left',
+            btnConfig
+        );
+
+        // Create Right button
+        this.virtualButtons.right = this.createVirtualButton(
+            btnConfig.RIGHT_BUTTON.X,
+            btnConfig.BUTTON_Y,
+            btnConfig.RIGHT_BUTTON.LABEL,
+            'right',
+            btnConfig
+        );
+
+        // Future buttons can be added here following the same pattern:
+        // this.virtualButtons.fire = this.createVirtualButton(
+        //     btnConfig.FIRE_BUTTON.X,
+        //     btnConfig.BUTTON_Y,
+        //     btnConfig.FIRE_BUTTON.LABEL,
+        //     'fire',
+        //     btnConfig
+        // );
+    }
+
+    /**
+     * Create a single virtual button (circular)
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string} label - Button label text
+     * @param {string} buttonKey - Key for state tracking ('left', 'right', etc.)
+     * @param {object} config - Button configuration
+     * @returns {Phaser.GameObjects.Container}
+     */
+    createVirtualButton(x, y, label, buttonKey, config) {
+        const container = this.scene.add.container(x, y);
+        const radius = config.BUTTON_SIZE / 2;
+
+        // Create circle background
+        const circle = this.scene.add.graphics();
+        circle.fillStyle(0x333333, config.BUTTON_ALPHA);
+        circle.lineStyle(3, 0xffffff, 0.8);
+        circle.fillCircle(0, 0, radius);
+        circle.strokeCircle(0, 0, radius);
+
+        // Create label text
+        const buttonText = this.scene.add.text(0, 0, label, {
+            fontSize: '40px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        container.add([circle, buttonText]);
+
+        // Make interactive
+        container.setInteractive(
+            new Phaser.Geom.Circle(0, 0, radius),
+            Phaser.Geom.Circle.Contains
+        );
+        container.setDepth(100); // Ensure buttons are above game objects
+
+        // Handle touch events
+        container.on('pointerdown', () => {
+            this.virtualButtonStates[buttonKey] = true;
+            container.setAlpha(config.BUTTON_PRESSED_ALPHA);
+        });
+
+        container.on('pointerup', () => {
+            this.virtualButtonStates[buttonKey] = false;
+            container.setAlpha(1.0);
+        });
+
+        container.on('pointerout', () => {
+            this.virtualButtonStates[buttonKey] = false;
+            container.setAlpha(1.0);
+        });
+
+        return container;
+    }
+
+    /**
+     * Get virtual button state
+     * @param {string} button - Button key ('left', 'right', etc.)
+     * @returns {boolean} - Whether button is pressed
+     */
+    getVirtualButtonState(button) {
+        return this.virtualButtonStates[button] || false;
     }
 
     /**
@@ -453,6 +576,10 @@ class UIManager {
         if (this.pauseRestartButton) this.pauseRestartButton.destroy();
         if (this.pauseButton) this.pauseButton.destroy();
 
+        // Destroy virtual buttons
+        if (this.virtualButtons.left) this.virtualButtons.left.destroy();
+        if (this.virtualButtons.right) this.virtualButtons.right.destroy();
+
         // Destroy victory screen
         this.hideVictory();
 
@@ -466,6 +593,8 @@ class UIManager {
         this.pauseResumeButton = null;
         this.pauseRestartButton = null;
         this.pauseButton = null;
+        this.virtualButtons = { left: null, right: null };
+        this.virtualButtonStates = { left: false, right: false };
     }
 }
 

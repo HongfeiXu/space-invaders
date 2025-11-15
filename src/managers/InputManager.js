@@ -28,62 +28,12 @@ class InputManager {
         this.keyS = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-        // Touch input state
+        // Touch input state (legacy, kept for compatibility)
         this.isTouchLeft = false;
         this.isTouchRight = false;
 
-        // Touch target tracking (for mobile auto-movement)
-        this.touchTargetX = null;
-        this.hasTouchTarget = false;
-
-        // Touch event handlers (only on mobile)
-        this.touchDownHandler = null;
-        this.touchUpHandler = null;
-        this.touchMoveHandler = null;
-
         // Pause callback
         this.pauseCallback = null;
-
-        // Initialize touch controls if mobile
-        if (this._isMobileDevice) {
-            this.initializeTouchControls();
-        }
-    }
-
-    /**
-     * Initialize touch controls for mobile devices
-     */
-    initializeTouchControls() {
-        // Save handler references for cleanup
-        this.touchDownHandler = (pointer) => {
-            // Don't handle touch if game is paused or over
-            // (checked in GameScene, but we can filter here too if needed)
-
-            // Set touch target position for auto-movement
-            this.touchTargetX = pointer.x;
-            this.hasTouchTarget = true;
-        };
-
-        this.touchMoveHandler = (pointer) => {
-            // Update touch target position while dragging
-            if (this.hasTouchTarget) {
-                this.touchTargetX = pointer.x;
-            }
-        };
-
-        this.touchUpHandler = () => {
-            // Clear touch target when touch ends
-            this.touchTargetX = null;
-            this.hasTouchTarget = false;
-
-            // Legacy support (kept for backwards compatibility if needed)
-            this.isTouchLeft = false;
-            this.isTouchRight = false;
-        };
-
-        this.scene.input.on('pointerdown', this.touchDownHandler);
-        this.scene.input.on('pointermove', this.touchMoveHandler);
-        this.scene.input.on('pointerup', this.touchUpHandler);
     }
 
     /**
@@ -96,19 +46,31 @@ class InputManager {
     }
 
     /**
-     * Check if left movement is active (keyboard or touch)
+     * Check if left movement is active (keyboard or virtual button)
      * @returns {boolean}
      */
     isLeftPressed() {
-        return this.cursors.left.isDown || this.keyA.isDown || this.isTouchLeft;
+        // Check keyboard
+        const keyboardLeft = this.cursors.left.isDown || this.keyA.isDown;
+
+        // Check virtual button (mobile only)
+        const virtualLeft = this.scene.uiManager && this.scene.uiManager.getVirtualButtonState('left');
+
+        return keyboardLeft || virtualLeft || this.isTouchLeft;
     }
 
     /**
-     * Check if right movement is active (keyboard or touch)
+     * Check if right movement is active (keyboard or virtual button)
      * @returns {boolean}
      */
     isRightPressed() {
-        return this.cursors.right.isDown || this.keyD.isDown || this.isTouchRight;
+        // Check keyboard
+        const keyboardRight = this.cursors.right.isDown || this.keyD.isDown;
+
+        // Check virtual button (mobile only)
+        const virtualRight = this.scene.uiManager && this.scene.uiManager.getVirtualButtonState('right');
+
+        return keyboardRight || virtualRight || this.isTouchRight;
     }
 
     /**
@@ -152,39 +114,9 @@ class InputManager {
     }
 
     /**
-     * Get touch target X position (for mobile auto-movement)
-     * @returns {number|null} - Touch target X position, or null if no target
-     */
-    getTouchTargetX() {
-        return this.hasTouchTarget ? this.touchTargetX : null;
-    }
-
-    /**
-     * Check if there is an active touch target
-     * @returns {boolean}
-     */
-    hasTouchTargetActive() {
-        return this.hasTouchTarget;
-    }
-
-    /**
      * Cleanup input resources
      */
     shutdown() {
-        // Remove touch event listeners
-        if (this.touchDownHandler) {
-            this.scene.input.off('pointerdown', this.touchDownHandler);
-            this.touchDownHandler = null;
-        }
-        if (this.touchMoveHandler) {
-            this.scene.input.off('pointermove', this.touchMoveHandler);
-            this.touchMoveHandler = null;
-        }
-        if (this.touchUpHandler) {
-            this.scene.input.off('pointerup', this.touchUpHandler);
-            this.touchUpHandler = null;
-        }
-
         // Remove pause callback
         if (this.pauseCallback) {
             this.scene.input.keyboard.off('keydown-ESC', this.pauseCallback);
