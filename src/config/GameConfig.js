@@ -16,7 +16,11 @@ module.exports = {
     MOBILE_SHOOT_COOLDOWN: 500,  // Minimum delay between shots (ms) - Mobile (auto-fire)
     HIT_BLINK_DURATION: 500,    // Duration of blink when hit (ms)
     INVINCIBLE_DURATION: 500,   // Duration of invincibility after respawn (ms)
-    HIT_TEXT_DURATION: 500     // Duration of HIT! text display (ms)
+    HIT_TEXT_DURATION: 500,     // Duration of HIT! text display (ms)
+
+    // Touch target movement (mobile)
+    TOUCH_TARGET_SPEED: 300,      // Auto-movement speed towards touch target (px/s)
+    TOUCH_TARGET_THRESHOLD: 5     // Distance threshold to stop at target (px)
   },
 
   // Enemy configuration
