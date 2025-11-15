@@ -145,6 +145,46 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - ❌ `Update` (too vague)
 - ❌ Long multi-line descriptions (put in docs instead)
 
+### Version Control Approval Process
+
+**IMPORTANT**: Different types of changes require different approval workflows:
+
+#### ✅ Auto-commit (No approval needed)
+**Documentation changes** - Can directly `git commit + push`:
+- Files in `documentation/` (PLAN.md, PROGRESS.md, memos/*)
+- README.md updates
+- Configuration files (.gitignore, .claude/*)
+- Any purely documentation changes
+
+#### ⏸️ Require User Approval
+**Engineering changes** - Must ask user before commit:
+- Files in `src/` (*.js source code)
+- `webpack.config.js` (build configuration)
+- `package.json` (dependencies)
+- `public/` (if affects game functionality)
+- `docs/main.js` (production build output)
+
+**Approval workflow**:
+1. Complete code changes and testing
+2. Show commit message and changed files to user
+3. Ask: "是否确认提交并推送到 GitHub？"
+4. Wait for user confirmation
+5. Execute `git commit + push` only after approval
+
+**Example approval prompt**:
+```
+准备提交以下变更：
+
+Commit message: "feat: Add sound effects system"
+
+Changed files:
+- src/managers/AudioManager.js
+- src/scenes/GameScene.js
+- docs/main.js
+
+是否确认提交并推送到 GitHub？
+```
+
 ## Next Steps
 
 Refer to `PLAN.md` for development roadmap. High-priority items:
@@ -155,4 +195,4 @@ Refer to `PLAN.md` for development roadmap. High-priority items:
 
 ---
 
-*Last updated: 2025-11-13*
+*Last updated: 2025-11-15*
