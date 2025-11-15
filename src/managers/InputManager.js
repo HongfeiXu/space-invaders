@@ -32,9 +32,14 @@ class InputManager {
         this.isTouchLeft = false;
         this.isTouchRight = false;
 
+        // Touch target tracking (for mobile auto-movement)
+        this.touchTargetX = null;
+        this.hasTouchTarget = false;
+
         // Touch event handlers (only on mobile)
         this.touchDownHandler = null;
         this.touchUpHandler = null;
+        this.touchMoveHandler = null;
 
         // Pause callback
         this.pauseCallback = null;
@@ -54,20 +59,30 @@ class InputManager {
             // Don't handle touch if game is paused or over
             // (checked in GameScene, but we can filter here too if needed)
 
-            const halfWidth = this.scene.cameras.main.width / 2;
-            if (pointer.x < halfWidth) {
-                this.isTouchLeft = true;
-            } else {
-                this.isTouchRight = true;
+            // Set touch target position for auto-movement
+            this.touchTargetX = pointer.x;
+            this.hasTouchTarget = true;
+        };
+
+        this.touchMoveHandler = (pointer) => {
+            // Update touch target position while dragging
+            if (this.hasTouchTarget) {
+                this.touchTargetX = pointer.x;
             }
         };
 
         this.touchUpHandler = () => {
+            // Clear touch target when touch ends
+            this.touchTargetX = null;
+            this.hasTouchTarget = false;
+
+            // Legacy support (kept for backwards compatibility if needed)
             this.isTouchLeft = false;
             this.isTouchRight = false;
         };
 
         this.scene.input.on('pointerdown', this.touchDownHandler);
+        this.scene.input.on('pointermove', this.touchMoveHandler);
         this.scene.input.on('pointerup', this.touchUpHandler);
     }
 
@@ -137,6 +152,22 @@ class InputManager {
     }
 
     /**
+     * Get touch target X position (for mobile auto-movement)
+     * @returns {number|null} - Touch target X position, or null if no target
+     */
+    getTouchTargetX() {
+        return this.hasTouchTarget ? this.touchTargetX : null;
+    }
+
+    /**
+     * Check if there is an active touch target
+     * @returns {boolean}
+     */
+    hasTouchTargetActive() {
+        return this.hasTouchTarget;
+    }
+
+    /**
      * Cleanup input resources
      */
     shutdown() {
@@ -144,6 +175,10 @@ class InputManager {
         if (this.touchDownHandler) {
             this.scene.input.off('pointerdown', this.touchDownHandler);
             this.touchDownHandler = null;
+        }
+        if (this.touchMoveHandler) {
+            this.scene.input.off('pointermove', this.touchMoveHandler);
+            this.touchMoveHandler = null;
         }
         if (this.touchUpHandler) {
             this.scene.input.off('pointerup', this.touchUpHandler);
