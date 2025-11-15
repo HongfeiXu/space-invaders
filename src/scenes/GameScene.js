@@ -3,6 +3,8 @@ const GameConfig = require('../config/GameConfig');
 const AudioManager = require('../managers/AudioManager');
 const ScoreManager = require('../managers/ScoreManager');
 const EffectsManager = require('../managers/EffectsManager');
+const InputManager = require('../managers/InputManager');
+const BulletManager = require('../managers/BulletManager');
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -17,6 +19,8 @@ class GameScene extends Phaser.Scene {
         this.audioManager = new AudioManager(this);
         this.scoreManager = new ScoreManager(this);
         this.effectsManager = new EffectsManager(this);
+        this.inputManager = new InputManager(this);
+        this.bulletManager = new BulletManager(this, this.inputManager.isMobileDevice());
 
         // 初始化游戏变量
         this.lives = GameConfig.GAME.INITIAL_LIVES;
@@ -55,33 +59,16 @@ class GameScene extends Phaser.Scene {
         // 创建敌人组
         this.enemies = this.physics.add.group();
 
-        // 创建子弹组
-        this.playerBullets = this.physics.add.group();
-        this.enemyBullets = this.physics.add.group();
-
         // 生成敌人
         this.spawnEnemies();
 
         // 设置碰撞检测
-        this.physics.add.overlap(this.playerBullets, this.enemies, this.hitEnemy, null, this);
-        this.physics.add.overlap(this.player, this.enemyBullets, this.hitPlayer, null, this);
+        this.physics.add.overlap(this.bulletManager.getPlayerBullets(), this.enemies, this.hitEnemy, null, this);
+        this.physics.add.overlap(this.player, this.bulletManager.getEnemyBullets(), this.hitPlayer, null, this);
         this.physics.add.overlap(this.player, this.enemies, this.hitPlayer, null, this);
 
-        // 输入控制
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-
-        // WASD 键控制
-        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
-        // ESC 键暂停游戏
-        this.input.keyboard.on('keydown-ESC', () => {
-            this.togglePause();
-        });
+        // 注册暂停控制 (ESC键)
+        this.inputManager.onPauseRequested(() => this.togglePause());
 
         // 暂停提示文本
         this.pauseText = this.add.text(400, 200, 'PAUSED', {
@@ -112,7 +99,7 @@ class GameScene extends Phaser.Scene {
         // 敌人射击定时器
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: this.enemyShoot,
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
             callbackScope: this,
             loop: true
         });
@@ -120,36 +107,6 @@ class GameScene extends Phaser.Scene {
         // 播放背景音乐
         // 音乐来自: Eric Matyas (www.soundimage.org)
         this.audioManager.playBackgroundMusic();
-
-        // 触摸控制（移动端适配）- 只在非桌面设备上启用
-        this.isTouchLeft = false;
-        this.isTouchRight = false;
-
-        // 检测是否为移动设备（保存为实例变量供 update() 使用）
-        this.isMobileDevice = !this.sys.game.device.os.desktop;
-
-        // 只在移动设备上启用触摸控制
-        if (this.isMobileDevice) {
-            // 保存事件处理器引用以便清理
-            this.touchDownHandler = (pointer) => {
-                if (this.gameOver || this.isPaused) return;
-
-                const halfWidth = this.cameras.main.width / 2;
-                if (pointer.x < halfWidth) {
-                    this.isTouchLeft = true;
-                } else {
-                    this.isTouchRight = true;
-                }
-            };
-
-            this.touchUpHandler = () => {
-                this.isTouchLeft = false;
-                this.isTouchRight = false;
-            };
-
-            this.input.on('pointerdown', this.touchDownHandler);
-            this.input.on('pointerup', this.touchUpHandler);
-        }
 
         // 创建暂停按钮（右上角）
         this.pauseButton = this.createButton(
@@ -282,38 +239,22 @@ class GameScene extends Phaser.Scene {
 
         if (this.gameOver || this.isPaused) return;
 
-        // 玩家移动控制 (支持方向键、WASD 和触摸)
-        if (this.cursors.left.isDown || this.keyA.isDown || this.isTouchLeft) {
+        // 玩家移动控制 (支持键盘和触摸，由 InputManager 统一管理)
+        if (this.inputManager.isLeftPressed()) {
             this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
-        } else if (this.cursors.right.isDown || this.keyD.isDown || this.isTouchRight) {
+        } else if (this.inputManager.isRightPressed()) {
             this.player.setVelocityX(GameConfig.PLAYER.SPEED);
         } else {
             this.player.setVelocityX(0);
         }
 
-        // 玩家射击
-        if (this.isMobileDevice) {
-            // 移动端：持续自动射击
-            this.playerShoot();
-        } else {
-            // PC 端：按空格键射击
-            if (this.spaceBar.isDown) {
-                this.playerShoot();
-            }
+        // 玩家射击 (PC: Space键, 移动端: 自动)
+        if (this.inputManager.isShootPressed()) {
+            this.bulletManager.shootPlayerBullet(this.player.x, this.player.y - 10);
         }
 
-        // 移除超出屏幕的子弹
-        this.playerBullets.children.entries.forEach(bullet => {
-            if (bullet.y < 0) {
-                bullet.destroy();
-            }
-        });
-
-        this.enemyBullets.children.entries.forEach(bullet => {
-            if (bullet.y > this.cameras.main.height) {
-                bullet.destroy();
-            }
-        });
+        // 清理越界子弹
+        this.bulletManager.cleanupOutOfBounds();
 
         // 检查敌人是否全部消灭（波次系统）
         if (this.enemies.children.entries.length === 0 && !this.isTransitioning && !this.isVictoryScreen) {
@@ -338,33 +279,6 @@ class GameScene extends Phaser.Scene {
                 enemy.setCollideWorldBounds(true);
             }
         }
-    }
-
-    playerShoot() {
-        // 防止连续射击太快
-        if (!this.lastShotTime) {
-            this.lastShotTime = 0;
-        }
-
-        const currentTime = this.time.now;
-        // 根据设备类型使用不同的射击冷却时间
-        const shootCooldown = this.isMobileDevice
-            ? GameConfig.PLAYER.MOBILE_SHOOT_COOLDOWN
-            : GameConfig.PLAYER.SHOOT_COOLDOWN;
-
-        if (currentTime - this.lastShotTime > shootCooldown) {
-            const bullet = this.playerBullets.create(this.player.x, this.player.y - 10, 'playerBullet');
-            bullet.setVelocityY(-GameConfig.PLAYER.BULLET_SPEED);
-            this.lastShotTime = currentTime;
-        }
-    }
-
-    enemyShoot() {
-        if (this.enemies.children.entries.length === 0) return;
-
-        const randomEnemy = Phaser.Utils.Array.GetRandom(this.enemies.children.entries);
-        const bullet = this.enemyBullets.create(randomEnemy.x, randomEnemy.y + 10, 'enemyBullet');
-        bullet.setVelocityY(GameConfig.ENEMY.BULLET_SPEED);
     }
 
     hitEnemy(bullet, enemy) {
@@ -558,7 +472,7 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: newInterval,
-            callback: this.enemyShoot,
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
             callbackScope: this,
             loop: true
         });
@@ -645,7 +559,7 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: this.enemyShoot,
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
             callbackScope: this,
             loop: true
         });
@@ -698,20 +612,16 @@ class GameScene extends Phaser.Scene {
         if (this.effectsManager) {
             this.effectsManager.shutdown();
         }
+        if (this.inputManager) {
+            this.inputManager.shutdown();
+        }
+        if (this.bulletManager) {
+            this.bulletManager.shutdown();
+        }
 
         // 停止敌人射击定时器
         if (this.enemyFireTimer) {
             this.enemyFireTimer.remove();
-        }
-
-        // 清理触摸事件监听器（防止内存泄漏）
-        if (this.touchDownHandler) {
-            this.input.off('pointerdown', this.touchDownHandler);
-            this.touchDownHandler = null;
-        }
-        if (this.touchUpHandler) {
-            this.input.off('pointerup', this.touchUpHandler);
-            this.touchUpHandler = null;
         }
 
         // 清理通关文本对象
