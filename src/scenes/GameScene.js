@@ -87,6 +87,28 @@ class GameScene extends Phaser.Scene {
             loop: GameConfig.AUDIO.BACKGROUND_MUSIC_LOOP,
             volume: GameConfig.AUDIO.BACKGROUND_MUSIC_VOLUME
         });
+
+        // 触摸控制（移动端支持）
+        this.touchTarget = null; // 触摸目标位置的X坐标
+
+        // 触摸开始：记录目标位置
+        this.input.on('pointerdown', (pointer) => {
+            if (this.gameOver || this.isPaused) return;
+            this.touchTarget = pointer.x;
+        });
+
+        // 触摸移动：更新目标位置
+        this.input.on('pointermove', (pointer) => {
+            if (this.gameOver || this.isPaused) return;
+            if (pointer.isDown) {
+                this.touchTarget = pointer.x;
+            }
+        });
+
+        // 触摸结束：清除目标
+        this.input.on('pointerup', () => {
+            this.touchTarget = null;
+        });
     }
 
     togglePause() {
@@ -128,7 +150,25 @@ class GameScene extends Phaser.Scene {
         if (this.gameOver || this.isPaused) return;
 
         // 玩家移动控制
-        if (this.cursors.left.isDown) {
+        // 触摸控制优先（移动端）
+        if (this.touchTarget !== null) {
+            const distance = this.touchTarget - this.player.x;
+            const deadZone = 5; // 死区，避免抖动
+
+            if (Math.abs(distance) > deadZone) {
+                // 根据距离方向设置速度
+                if (distance < 0) {
+                    this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
+                } else {
+                    this.player.setVelocityX(GameConfig.PLAYER.SPEED);
+                }
+            } else {
+                // 到达目标位置，停止移动
+                this.player.setVelocityX(0);
+            }
+        }
+        // 键盘控制（PC端）
+        else if (this.cursors.left.isDown) {
             this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(GameConfig.PLAYER.SPEED);
@@ -137,7 +177,8 @@ class GameScene extends Phaser.Scene {
         }
 
         // 玩家射击
-        if (this.spaceBar.isDown) {
+        // 触摸时自动射击，或使用空格键射击
+        if (this.touchTarget !== null || this.spaceBar.isDown) {
             this.playerShoot();
         }
 
