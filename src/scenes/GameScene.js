@@ -5,6 +5,7 @@ const ScoreManager = require('../managers/ScoreManager');
 const EffectsManager = require('../managers/EffectsManager');
 const InputManager = require('../managers/InputManager');
 const BulletManager = require('../managers/BulletManager');
+const UIManager = require('../managers/UIManager');
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -21,6 +22,7 @@ class GameScene extends Phaser.Scene {
         this.effectsManager = new EffectsManager(this);
         this.inputManager = new InputManager(this);
         this.bulletManager = new BulletManager(this, this.inputManager.isMobileDevice());
+        this.uiManager = new UIManager(this, this.scoreManager);
 
         // 初始化游戏变量
         this.lives = GameConfig.GAME.INITIAL_LIVES;
@@ -39,18 +41,6 @@ class GameScene extends Phaser.Scene {
         // 说明：this.scene.restart() 时触发此事件，在重新调用 create() 之前
         this.events.on('shutdown', this.shutdown, this);
 
-        // 创建UI文本
-        this.createUITexts();
-
-        // Create FPS counter if enabled
-        if (GameConfig.UI.SHOW_FPS) {
-            this.fpsText = this.add.text(GameConfig.UI.FPS_X, GameConfig.UI.FPS_Y, 'FPS: 60', {
-                fontSize: '16px',
-                fill: '#0f0',
-                fontFamily: 'monospace'
-            });
-        }
-
         // 创建玩家飞船
         this.player = this.physics.add.sprite(GameConfig.PLAYER.INITIAL_X, GameConfig.PLAYER.INITIAL_Y, 'player');
         this.player.setCollideWorldBounds(true);
@@ -67,34 +57,16 @@ class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.bulletManager.getEnemyBullets(), this.hitPlayer, null, this);
         this.physics.add.overlap(this.player, this.enemies, this.hitPlayer, null, this);
 
-        // 注册暂停控制 (ESC键)
+        // 注册暂停控制 (ESC键 + 暂停按钮)
         this.inputManager.onPauseRequested(() => this.togglePause());
 
-        // 暂停提示文本
-        this.pauseText = this.add.text(400, 200, 'PAUSED', {
-            fontSize: '50px',
-            fill: '#fff',
-            align: 'center'
-        }).setOrigin(0.5).setVisible(false);
-
-        // 暂停菜单按钮
-        this.pauseResumeButton = this.createButton(
-            400,
-            300,
-            'Resume',
-            () => this.togglePause(),
-            { width: 180, height: 50 }
-        );
-        this.pauseResumeButton.setVisible(false);
-
-        this.pauseRestartButton = this.createButton(
-            400,
-            370,
-            'Restart',
-            () => this.scene.restart(),
-            { width: 180, height: 50 }
-        );
-        this.pauseRestartButton.setVisible(false);
+        // Register pause button callback
+        const pauseButton = this.uiManager.getPauseButton();
+        pauseButton.removeAllListeners('pointerup');
+        pauseButton.on('pointerup', () => {
+            pauseButton.setScale(1);
+            this.togglePause();
+        });
 
         // 敌人射击定时器
         this.enemyFireTimer = this.time.addEvent({
@@ -107,98 +79,6 @@ class GameScene extends Phaser.Scene {
         // 播放背景音乐
         // 音乐来自: Eric Matyas (www.soundimage.org)
         this.audioManager.playBackgroundMusic();
-
-        // 创建暂停按钮（右上角）
-        this.pauseButton = this.createButton(
-            this.cameras.main.width - 80,
-            40,
-            '❚❚',
-            () => this.togglePause(),
-            {
-                width: 60,
-                height: 40,
-                fontSize: '20px'
-            }
-        );
-    }
-
-    /**
-     * 创建可点击按钮
-     * @param {number} x - X坐标
-     * @param {number} y - Y坐标
-     * @param {string} text - 按钮文字
-     * @param {Function} callback - 点击回调函数
-     * @param {object} options - 可选配置 {width, height, fontSize, bgColor, textColor}
-     * @returns {Phaser.GameObjects.Container} 按钮容器
-     */
-    createButton(x, y, text, callback, options = {}) {
-        const config = {
-            width: options.width || 200,
-            height: options.height || 60,
-            fontSize: options.fontSize || '24px',
-            bgColor: options.bgColor || 0x000000,
-            bgAlpha: options.bgAlpha || 0.7,
-            textColor: options.textColor || '#ffffff',
-            borderColor: options.borderColor || 0xffffff,
-            borderWidth: options.borderWidth || 2
-        };
-
-        // 创建容器
-        const container = this.add.container(x, y);
-
-        // 创建背景
-        const bg = this.add.graphics();
-        bg.fillStyle(config.bgColor, config.bgAlpha);
-        bg.lineStyle(config.borderWidth, config.borderColor, 1);
-        bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-        bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-
-        // 创建文本
-        const buttonText = this.add.text(0, 0, text, {
-            fontSize: config.fontSize,
-            fill: config.textColor,
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        // 添加到容器
-        container.add([bg, buttonText]);
-
-        // 设置交互区域（自定义 hitArea，以容器中心为原点）
-        container.setInteractive(
-            new Phaser.Geom.Rectangle(-config.width / 2, -config.height / 2, config.width, config.height),
-            Phaser.Geom.Rectangle.Contains
-        );
-
-        // 添加点击效果
-        container.on('pointerdown', () => {
-            container.setScale(0.95);
-            bg.clear();
-            bg.fillStyle(config.bgColor, config.bgAlpha + 0.2);
-            bg.lineStyle(config.borderWidth, config.borderColor, 1);
-            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-        });
-
-        container.on('pointerup', () => {
-            container.setScale(1);
-            bg.clear();
-            bg.fillStyle(config.bgColor, config.bgAlpha);
-            bg.lineStyle(config.borderWidth, config.borderColor, 1);
-            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-            callback();
-        });
-
-        container.on('pointerout', () => {
-            container.setScale(1);
-            bg.clear();
-            bg.fillStyle(config.bgColor, config.bgAlpha);
-            bg.lineStyle(config.borderWidth, config.borderColor, 1);
-            bg.fillRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-            bg.strokeRoundedRect(-config.width / 2, -config.height / 2, config.width, config.height, 8);
-        });
-
-        return container;
     }
 
     togglePause() {
@@ -208,9 +88,10 @@ class GameScene extends Phaser.Scene {
 
         if (this.isPaused) {
             this.physics.pause();
-            this.pauseText.setVisible(true);
-            this.pauseResumeButton.setVisible(true);
-            this.pauseRestartButton.setVisible(true);
+            this.uiManager.showPauseMenu(
+                () => this.togglePause(),  // Resume callback
+                () => this.scene.restart()  // Restart callback
+            );
             // 暂停背景音乐
             this.audioManager.pauseBackgroundMusic();
             // 暂停敌人射击定时器
@@ -219,9 +100,7 @@ class GameScene extends Phaser.Scene {
             }
         } else {
             this.physics.resume();
-            this.pauseText.setVisible(false);
-            this.pauseResumeButton.setVisible(false);
-            this.pauseRestartButton.setVisible(false);
+            this.uiManager.hidePauseMenu();
             // 恢复背景音乐
             this.audioManager.resumeBackgroundMusic();
             // 恢复敌人射击定时器
@@ -233,8 +112,8 @@ class GameScene extends Phaser.Scene {
 
     update() {
         // Update FPS counter if enabled
-        if (GameConfig.UI.SHOW_FPS && this.fpsText) {
-            this.fpsText.setText('FPS: ' + Math.round(this.game.loop.actualFps));
+        if (GameConfig.UI.SHOW_FPS) {
+            this.uiManager.updateFPS(Math.round(this.game.loop.actualFps));
         }
 
         if (this.gameOver || this.isPaused) return;
@@ -319,7 +198,7 @@ class GameScene extends Phaser.Scene {
 
         // 减少生命值
         this.lives--;
-        this.livesText.setText('Lives: ' + this.lives);
+        this.uiManager.updateLives(this.lives);
 
         // 如果生命值归零，游戏结束
         if (this.lives <= 0) {
@@ -354,81 +233,25 @@ class GameScene extends Phaser.Scene {
             this.player.setAlpha(1);
         }
 
-        // 检查是否破纪录（当前分数 > 游戏开始时的最高分）
+        // 检查是否破纪录
         const currentScore = this.scoreManager.getScore();
         const highScore = this.scoreManager.getHighScore();
         const isNewRecord = this.scoreManager.shouldShowNewRecordAnimation();
 
-        // 构建 Game Over 文本
-        let gameOverMessage = 'GAME OVER\n';
-        gameOverMessage += 'Score: ' + currentScore + '\n';
-        gameOverMessage += 'High Score: ' + highScore;
-        if (isNewRecord) {
-            gameOverMessage += '\n🎉 NEW RECORD! 🎉';
-        }
-
-        const gameOverText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 60,
-            gameOverMessage,
-            {
-                fontSize: '40px',
-                fill: isNewRecord ? '#FFD700' : '#fff',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // 添加 Restart 按钮
-        this.createButton(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 100,
-            'Restart',
-            () => this.scene.restart(),
-            { width: 200, height: 60, fontSize: '28px' }
-        );
+        // 显示游戏结束界面
+        this.uiManager.showGameOver(currentScore, highScore, isNewRecord, () => this.scene.restart());
     }
 
     // ==================== UI系统 ====================
-
-    createUITexts() {
-        // 顶部中央：波次显示
-        this.waveText = this.add.text(
-            this.cameras.main.width / 2,
-            15,
-            `WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`,
-            {
-                fontSize: '28px',
-                fill: '#ffd700',  // 金色
-                fontStyle: 'bold'
-            }
-        ).setOrigin(0.5, 0);
-
-        // 左上角：最高分
-        this.highScoreText = this.add.text(10, 10, `High Score: ${this.scoreManager.getHighScore()}`, {
-            fontSize: '20px',
-            fill: '#ffd700'  // 金色
-        });
-
-        // 左上角：当前分数（在最高分下方）
-        this.scoreText = this.add.text(10, 35, 'Score: 0', {
-            fontSize: '20px',
-            fill: '#fff'
-        });
-
-        // 左上角：生命值（在分数下方，空一行距离）
-        this.livesText = this.add.text(10, 85, `Lives: ${GameConfig.GAME.INITIAL_LIVES}`, {
-            fontSize: '20px',
-            fill: '#fff'
-        });
-    }
+    // (All UI managed by UIManager)
 
     updateScore(points) {
         const isNewHighScore = this.scoreManager.addScore(points);
-        this.scoreText.setText('Score: ' + this.scoreManager.getScore());
+        this.uiManager.updateScore(this.scoreManager.getScore());
 
         // 如果是新纪录，更新最高分显示
         if (isNewHighScore) {
-            this.highScoreText.setText(`High Score: ${this.scoreManager.getHighScore()}`);
+            this.uiManager.updateHighScore(this.scoreManager.getHighScore());
 
             // 显示新纪录动画（只显示一次）
             if (this.scoreManager.shouldShowNewRecordAnimation()) {
@@ -457,7 +280,7 @@ class GameScene extends Phaser.Scene {
         this.currentWave++;
 
         // 更新 UI
-        this.waveText.setText(`WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`);
+        this.uiManager.updateWave(this.currentWave, GameConfig.WAVE.MAX_WAVE);
 
         // 计算新的敌人射击间隔（逐波递减）
         const baseInterval = GameConfig.ENEMY.FIRE_INTERVAL;
@@ -496,62 +319,17 @@ class GameScene extends Phaser.Scene {
             this.enemyFireTimer.paused = true;
         }
 
-        // 清理之前的通关文本（如果存在）
-        this.cleanupVictoryTexts();
-
-        // 显示通关信息
-        this.victoryTitle = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 100,
-            '🎉 恭喜通关！🎉',
-            {
-                fontSize: '50px',
-                fill: '#FFD700',
-                fontStyle: 'bold',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        this.statsText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2,
-            `Score: ${this.scoreManager.getScore()}\nLives: ${this.lives}`,
-            {
-                fontSize: '30px',
-                fill: '#fff',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // 添加 Continue 按钮
-        this.continueButton = this.createButton(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 110,
-            'Continue',
-            () => this.restartWaveCycle(),
-            { width: 200, height: 60, fontSize: '28px' }
-        );
-
-        // 添加提示文字
-        this.continueHint = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 180,
-            '(Restart from Wave 1)',
-            {
-                fontSize: '18px',
-                fill: '#aaa',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
+        // 显示通关界面
+        this.uiManager.showVictory(this.scoreManager.getScore(), this.lives, () => this.restartWaveCycle());
     }
 
     restartWaveCycle() {
-        // 清理通关文本
-        this.cleanupVictoryTexts();
+        // 清理通关界面
+        this.uiManager.hideVictory();
 
         // 重置波次为 1
         this.currentWave = GameConfig.WAVE.INITIAL_WAVE;
-        this.waveText.setText(`WAVE: ${this.currentWave}/${GameConfig.WAVE.MAX_WAVE}`);
+        this.uiManager.updateWave(this.currentWave, GameConfig.WAVE.MAX_WAVE);
 
         // 重置射击间隔为初始值
         if (this.enemyFireTimer) {
@@ -581,26 +359,6 @@ class GameScene extends Phaser.Scene {
 
     // ==================== 生命周期管理 ====================
 
-    cleanupVictoryTexts() {
-        // 清理通关文本对象（防止内存泄漏）
-        if (this.victoryTitle) {
-            this.victoryTitle.destroy();
-            this.victoryTitle = null;
-        }
-        if (this.statsText) {
-            this.statsText.destroy();
-            this.statsText = null;
-        }
-        if (this.continueButton) {
-            this.continueButton.destroy();
-            this.continueButton = null;
-        }
-        if (this.continueHint) {
-            this.continueHint.destroy();
-            this.continueHint = null;
-        }
-    }
-
     shutdown() {
         // 清理管理器资源
         if (this.audioManager) {
@@ -618,14 +376,14 @@ class GameScene extends Phaser.Scene {
         if (this.bulletManager) {
             this.bulletManager.shutdown();
         }
+        if (this.uiManager) {
+            this.uiManager.shutdown();
+        }
 
         // 停止敌人射击定时器
         if (this.enemyFireTimer) {
             this.enemyFireTimer.remove();
         }
-
-        // 清理通关文本对象
-        this.cleanupVictoryTexts();
 
         // 移除事件监听器
         this.events.off('shutdown', this.shutdown, this);
