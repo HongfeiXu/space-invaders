@@ -31,9 +31,11 @@ class InputManager {
         // Touch input state
         this.isTouchLeft = false;
         this.isTouchRight = false;
+        this.touchTarget = null; // 触摸目标位置的X坐标（用于自动移动到目标）
 
         // Touch event handlers (only on mobile)
         this.touchDownHandler = null;
+        this.touchMoveHandler = null;
         this.touchUpHandler = null;
 
         // Pause callback
@@ -54,20 +56,26 @@ class InputManager {
             // Don't handle touch if game is paused or over
             // (checked in GameScene, but we can filter here too if needed)
 
-            const halfWidth = this.scene.cameras.main.width / 2;
-            if (pointer.x < halfWidth) {
-                this.isTouchLeft = true;
-            } else {
-                this.isTouchRight = true;
+            // 记录触摸目标位置
+            this.touchTarget = pointer.x;
+        };
+
+        this.touchMoveHandler = (pointer) => {
+            // 触摸拖动时更新目标位置
+            if (pointer.isDown) {
+                this.touchTarget = pointer.x;
             }
         };
 
         this.touchUpHandler = () => {
+            // 清除触摸目标
+            this.touchTarget = null;
             this.isTouchLeft = false;
             this.isTouchRight = false;
         };
 
         this.scene.input.on('pointerdown', this.touchDownHandler);
+        this.scene.input.on('pointermove', this.touchMoveHandler);
         this.scene.input.on('pointerup', this.touchUpHandler);
     }
 
@@ -137,6 +145,14 @@ class InputManager {
     }
 
     /**
+     * Get touch target position (for auto-movement on mobile)
+     * @returns {number|null} - X coordinate of touch target, or null if not touching
+     */
+    getTouchTarget() {
+        return this.touchTarget;
+    }
+
+    /**
      * Cleanup input resources
      */
     shutdown() {
@@ -144,6 +160,10 @@ class InputManager {
         if (this.touchDownHandler) {
             this.scene.input.off('pointerdown', this.touchDownHandler);
             this.touchDownHandler = null;
+        }
+        if (this.touchMoveHandler) {
+            this.scene.input.off('pointermove', this.touchMoveHandler);
+            this.touchMoveHandler = null;
         }
         if (this.touchUpHandler) {
             this.scene.input.off('pointerup', this.touchUpHandler);

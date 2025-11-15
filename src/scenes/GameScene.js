@@ -118,8 +118,27 @@ class GameScene extends Phaser.Scene {
 
         if (this.gameOver || this.isPaused) return;
 
-        // 玩家移动控制 (支持键盘和触摸，由 InputManager 统一管理)
-        if (this.inputManager.isLeftPressed()) {
+        // 玩家移动控制
+        // 优先使用触摸目标移动（移动端自动移动到触摸位置）
+        const touchTarget = this.inputManager.getTouchTarget();
+        if (touchTarget !== null) {
+            const distance = touchTarget - this.player.x;
+            const deadZone = 5; // 死区，避免抖动
+
+            if (Math.abs(distance) > deadZone) {
+                // 根据距离方向设置速度
+                if (distance < 0) {
+                    this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
+                } else {
+                    this.player.setVelocityX(GameConfig.PLAYER.SPEED);
+                }
+            } else {
+                // 到达目标位置，停止移动
+                this.player.setVelocityX(0);
+            }
+        }
+        // 键盘控制（PC端）或屏幕左右半区触摸控制
+        else if (this.inputManager.isLeftPressed()) {
             this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
         } else if (this.inputManager.isRightPressed()) {
             this.player.setVelocityX(GameConfig.PLAYER.SPEED);
