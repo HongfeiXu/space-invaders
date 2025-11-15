@@ -118,37 +118,13 @@ class GameScene extends Phaser.Scene {
 
         if (this.gameOver || this.isPaused) return;
 
-        // 玩家移动控制
-        // Mobile: Touch target auto-movement
-        // PC: Keyboard controls
-        if (this.inputManager.isMobileDevice()) {
-            const touchTargetX = this.inputManager.getTouchTargetX();
-            if (touchTargetX !== null) {
-                // Calculate distance to touch target
-                const distance = touchTargetX - this.player.x;
-                const absDistance = Math.abs(distance);
-
-                // Move towards target if beyond threshold
-                if (absDistance > GameConfig.PLAYER.TOUCH_TARGET_THRESHOLD) {
-                    const direction = distance > 0 ? 1 : -1;
-                    this.player.setVelocityX(direction * GameConfig.PLAYER.TOUCH_TARGET_SPEED);
-                } else {
-                    // Stop when close enough to target
-                    this.player.setVelocityX(0);
-                }
-            } else {
-                // No touch target - stop moving
-                this.player.setVelocityX(0);
-            }
+        // 玩家移动控制 (键盘方向键/WASD 或 移动端虚拟按钮)
+        if (this.inputManager.isLeftPressed()) {
+            this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
+        } else if (this.inputManager.isRightPressed()) {
+            this.player.setVelocityX(GameConfig.PLAYER.SPEED);
         } else {
-            // PC keyboard controls
-            if (this.inputManager.isLeftPressed()) {
-                this.player.setVelocityX(-GameConfig.PLAYER.SPEED);
-            } else if (this.inputManager.isRightPressed()) {
-                this.player.setVelocityX(GameConfig.PLAYER.SPEED);
-            } else {
-                this.player.setVelocityX(0);
-            }
+            this.player.setVelocityX(0);
         }
 
         // 玩家射击 (PC: Space键, 移动端: 自动)

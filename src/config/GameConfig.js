@@ -10,17 +10,13 @@ module.exports = {
   PLAYER: {
     SPEED: 250,           // Movement speed (px/s)
     INITIAL_X: 400,       // Spawn position X
-    INITIAL_Y: 550,       // Spawn position Y
+    INITIAL_Y: 1000,      // Spawn position Y (moved up to avoid bottom buttons)
     BULLET_SPEED: 400,    // Upward velocity of player bullets (px/s)
     SHOOT_COOLDOWN: 250,  // Minimum delay between shots (ms) - PC
     MOBILE_SHOOT_COOLDOWN: 500,  // Minimum delay between shots (ms) - Mobile (auto-fire)
     HIT_BLINK_DURATION: 500,    // Duration of blink when hit (ms)
     INVINCIBLE_DURATION: 500,   // Duration of invincibility after respawn (ms)
-    HIT_TEXT_DURATION: 500,     // Duration of HIT! text display (ms)
-
-    // Touch target movement (mobile)
-    TOUCH_TARGET_SPEED: 300,      // Auto-movement speed towards touch target (px/s)
-    TOUCH_TARGET_THRESHOLD: 5     // Distance threshold to stop at target (px)
+    HIT_TEXT_DURATION: 500      // Duration of HIT! text display (ms)
   },
 
   // Enemy configuration
@@ -59,7 +55,32 @@ module.exports = {
   UI: {
     SHOW_FPS: true,       // Display FPS counter
     FPS_X: 10,            // FPS position X
-    FPS_Y: 580            // FPS position Y (changed from 40 to 580 for bottom-left)
+    FPS_Y: 40,            // FPS position Y (top-left, to avoid button area)
+
+    // Virtual button configuration (mobile only, extensible)
+    VIRTUAL_BUTTONS: {
+      ENABLED: true,             // Enable virtual buttons on mobile
+      BUTTON_AREA_Y: 1000,       // Y position where button area starts
+      BUTTON_SIZE: 100,          // Button diameter
+      BUTTON_Y: 1100,            // Y position of button centers
+      BUTTON_ALPHA: 0.6,         // Button transparency (0.0-1.0)
+      BUTTON_PRESSED_ALPHA: 0.9, // Button transparency when pressed
+
+      // Left button
+      LEFT_BUTTON: {
+        X: 120,                  // X position
+        LABEL: '←'               // Display label
+      },
+
+      // Right button
+      RIGHT_BUTTON: {
+        X: 680,                  // X position
+        LABEL: '→'               // Display label
+      }
+
+      // Future buttons can be added here, e.g.:
+      // FIRE_BUTTON: { X: 400, LABEL: '🔥' }
+    }
   },
 
   // Audio configuration
