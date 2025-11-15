@@ -41,11 +41,6 @@ class InputManager {
         this.touchUpHandler = null;
         this.touchMoveHandler = null;
 
-        // DOM touch event handlers (for capturing touches outside canvas)
-        this.domTouchStartHandler = null;
-        this.domTouchMoveHandler = null;
-        this.domTouchEndHandler = null;
-
         // Pause callback
         this.pauseCallback = null;
 
@@ -57,76 +52,38 @@ class InputManager {
 
     /**
      * Initialize touch controls for mobile devices
-     * Uses DOM touch events to capture touches even outside the game canvas (e.g., letterbox areas)
      */
     initializeTouchControls() {
-        // DOM touch event handlers
-        this.domTouchStartHandler = (e) => {
-            // Prevent default behavior (like scrolling)
-            e.preventDefault();
+        // Save handler references for cleanup
+        this.touchDownHandler = (pointer) => {
+            // Don't handle touch if game is paused or over
+            // (checked in GameScene, but we can filter here too if needed)
 
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                const gameX = this.screenToGameX(touch.clientX);
+            // Set touch target position for auto-movement
+            this.touchTargetX = pointer.x;
+            this.hasTouchTarget = true;
+        };
 
-                this.touchTargetX = gameX;
-                this.hasTouchTarget = true;
+        this.touchMoveHandler = (pointer) => {
+            // Update touch target position while dragging
+            if (this.hasTouchTarget) {
+                this.touchTargetX = pointer.x;
             }
         };
 
-        this.domTouchMoveHandler = (e) => {
-            e.preventDefault();
+        this.touchUpHandler = () => {
+            // Clear touch target when touch ends
+            this.touchTargetX = null;
+            this.hasTouchTarget = false;
 
-            if (this.hasTouchTarget && e.touches.length > 0) {
-                const touch = e.touches[0];
-                const gameX = this.screenToGameX(touch.clientX);
-
-                this.touchTargetX = gameX;
-            }
+            // Legacy support (kept for backwards compatibility if needed)
+            this.isTouchLeft = false;
+            this.isTouchRight = false;
         };
 
-        this.domTouchEndHandler = (e) => {
-            e.preventDefault();
-
-            // Clear touch target when all touches end
-            if (e.touches.length === 0) {
-                this.touchTargetX = null;
-                this.hasTouchTarget = false;
-
-                // Legacy support
-                this.isTouchLeft = false;
-                this.isTouchRight = false;
-            }
-        };
-
-        // Listen to window touch events to capture touches outside canvas
-        window.addEventListener('touchstart', this.domTouchStartHandler, { passive: false });
-        window.addEventListener('touchmove', this.domTouchMoveHandler, { passive: false });
-        window.addEventListener('touchend', this.domTouchEndHandler, { passive: false });
-    }
-
-    /**
-     * Convert screen coordinates to game world coordinates
-     * Handles Phaser's scale mode (FIT) and canvas offset (letterboxing)
-     * @param {number} screenX - Screen X coordinate from touch event
-     * @returns {number} - Game world X coordinate (0-800)
-     */
-    screenToGameX(screenX) {
-        const canvas = this.scene.game.canvas;
-        const scale = this.scene.scale;
-
-        // Get canvas position on screen
-        const canvasRect = canvas.getBoundingClientRect();
-
-        // Convert screen coordinate to canvas coordinate
-        const canvasX = screenX - canvasRect.left;
-
-        // Convert canvas coordinate to game world coordinate
-        // displayScale accounts for the FIT scale mode
-        const gameX = canvasX / scale.displayScale.x;
-
-        // Clamp to game bounds (0 to game width)
-        return Phaser.Math.Clamp(gameX, 0, scale.gameSize.width);
+        this.scene.input.on('pointerdown', this.touchDownHandler);
+        this.scene.input.on('pointermove', this.touchMoveHandler);
+        this.scene.input.on('pointerup', this.touchUpHandler);
     }
 
     /**
@@ -214,18 +171,18 @@ class InputManager {
      * Cleanup input resources
      */
     shutdown() {
-        // Remove DOM touch event listeners
-        if (this.domTouchStartHandler) {
-            window.removeEventListener('touchstart', this.domTouchStartHandler);
-            this.domTouchStartHandler = null;
+        // Remove touch event listeners
+        if (this.touchDownHandler) {
+            this.scene.input.off('pointerdown', this.touchDownHandler);
+            this.touchDownHandler = null;
         }
-        if (this.domTouchMoveHandler) {
-            window.removeEventListener('touchmove', this.domTouchMoveHandler);
-            this.domTouchMoveHandler = null;
+        if (this.touchMoveHandler) {
+            this.scene.input.off('pointermove', this.touchMoveHandler);
+            this.touchMoveHandler = null;
         }
-        if (this.domTouchEndHandler) {
-            window.removeEventListener('touchend', this.domTouchEndHandler);
-            this.domTouchEndHandler = null;
+        if (this.touchUpHandler) {
+            this.scene.input.off('pointerup', this.touchUpHandler);
+            this.touchUpHandler = null;
         }
 
         // Remove pause callback
