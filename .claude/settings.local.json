@@ -9,7 +9,10 @@
       "Bash(git ls-tree:*)",
       "Bash(cat:*)",
       "Bash(del QUICKSTART.md)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

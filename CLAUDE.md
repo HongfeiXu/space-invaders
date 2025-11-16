@@ -26,7 +26,17 @@ npm run build       # Production build → /docs (for GitHub Pages)
 ```
 src/                 # Game source (CommonJS)
 ├── index.js         # Phaser config, textures, PreloadScene
-└── scenes/GameScene.js  # Main game logic
+├── config/
+│   └── GameConfig.js   # Centralized game parameters
+├── managers/        # Game subsystem managers
+│   ├── AudioManager.js   # Background music and sound effects
+│   ├── ScoreManager.js   # Score and high score tracking
+│   ├── EffectsManager.js # Visual effects (blink, particles)
+│   ├── InputManager.js   # Keyboard + touch input handling
+│   ├── BulletManager.js  # Bullet spawning and lifecycle
+│   └── UIManager.js      # HUD, menus, virtual buttons
+└── scenes/
+    └── GameScene.js  # Main game logic (393 lines)
 
 public/index.html    # HTML template (auto-processed by Webpack)
 docs/               # Build output (GitHub Pages source)
@@ -104,10 +114,13 @@ Modify values there to adjust gameplay without touching game logic.
 
 ## Current Performance
 
-- **FPS**: 60+ stable (8.3-16.6ms per frame)
+- **FPS**: 60+ stable (8.3-16.6ms per frame, desktop + mobile)
 - **Memory**: ~24.5 MB peak (measured in incognito mode)
+- **Code**: ~393 lines (GameScene.js, post-mobile implementation)
+- **Managers**: 6 (Audio, Score, Effects, Input, Bullet, UI)
 - **Enemies**: 15 (can support 50+)
 - **Bundle size**: 1.14 MB minified (includes Phaser)
+- **Mobile**: Full touch support (virtual buttons + tap-to-target)
 
 ## Git Workflow
 
