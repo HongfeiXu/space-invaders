@@ -105,12 +105,111 @@ Modify values there to adjust gameplay without touching game logic.
 - DevTools Performance: Monitor FPS, memory, GC events
 - Set `debug: true` in `src/index.js` for physics visualization
 
+## Documentation Maintenance Rules
+
+**IMPORTANT**: All future development sessions MUST follow these rules to keep documentation clean and maintainable.
+
+### PLAN.md - Future Roadmap Only
+**Purpose**: Forward-looking development roadmap, NOT a history document
+
+**Maintenance Rules**:
+- ✅ Record only **pending/future features** (what needs to be done next)
+- ❌ Remove completed items immediately after completion
+- ❌ Never keep ✅ completed items in this file
+- 📏 Target length: 150-200 lines (pure roadmap)
+
+**Session Checklist**:
+- [ ] After completing a feature, REMOVE it from PLAN.md
+- [ ] Move completed items to `documentation/archive/COMPLETED_FEATURES.md`
+- [ ] Add next planned features to PLAN.md
+- [ ] Keep only the next 2-3 priority levels visible
+
+**Bad Practice ❌**:
+```markdown
+## Priority 2 ✅ Completed (Session 3)
+- ✅ Wave system implemented
+- ✅ Background music added
+```
+
+**Good Practice ✅**:
+```markdown
+## Priority 2: Audio & Effects
+- ❌ SFX sound system (next)
+- ❌ Particle effects
+```
+
+---
+
+### PROGRESS.md - High-Level History Only
+**Purpose**: Concise development history focused on "why" not "what"
+
+**Maintenance Rules**:
+- ✅ Record **architecture decisions** and **technical rationale**
+- ✅ Keep sessions **30-80 lines each** (brief, focused)
+- ❌ No code snippets (they become outdated, git history has them)
+- ❌ No step-by-step problem-solving details (unless architecturally significant)
+- ❌ No tables with incremental changes
+- 📏 Target length: 300-400 lines for all sessions
+
+**Session Template**:
+```markdown
+## Session N - Feature Name (Date)
+**Impact**: [High/Medium/Low]
+**Outcome**: 1-2 sentence summary
+
+### Key Achievements
+- Achievement 1
+- Achievement 2
+
+### Technical Decisions
+- Decision 1: Rationale
+- Decision 2: Rationale
+
+### Key Insights
+- Insight 1
+```
+
+**After Each Session**:
+1. Write brief PROGRESS.md entry (template above)
+2. Move old sessions to `documentation/archive/DETAILED_PROGRESS_SESSIONS_*.md`
+3. Keep only last 3-4 sessions in main PROGRESS.md
+
+---
+
+### Archive Policy
+**When to Archive**:
+- PLAN.md: Completed items → immediately move to `archive/COMPLETED_FEATURES.md`
+- PROGRESS.md: Sessions older than 4 sessions → move to `archive/DETAILED_PROGRESS_*.md`
+
+**Archive Location**:
+```
+documentation/archive/
+├── COMPLETED_FEATURES.md      # All finished work
+├── DETAILED_PROGRESS_SESSIONS_1-5.md  # Full session details
+└── other_historical_docs.md
+```
+
+---
+
+### Reference: Current Documentation
+
+| File | Purpose | Audience | Length |
+|------|---------|----------|--------|
+| `PLAN.md` | Future roadmap | Developers | ~150-200 lines |
+| `PROGRESS.md` | Architecture history | Team | ~300-400 lines |
+| `README.md` | Game overview | Players | ~100 lines |
+| `documentation/memos/*` | Technical guides | Developers | Variable |
+| `documentation/archive/*` | Historical details | Reference | Variable |
+
+---
+
 ## Key Documentation
 
 - **README.md** - Game overview for players
-- **PLAN.md** - Development roadmap and next steps
-- **PROGRESS.md** - Development history and architecture decisions
-- **documentation/memos/** - Detailed guides and reference docs (indexed by filename)
+- **PLAN.md** - Development roadmap (future only, no completed items)
+- **PROGRESS.md** - Architecture decisions and technical history
+- **documentation/memos/** - Detailed guides and reference docs
+- **documentation/archive/** - Historical details and completed features
 
 ## Current Performance
 
