@@ -49,7 +49,7 @@ webpack.config.js   # Build configuration
 package.json        # Dependencies
 ```
 
-## Important Rules
+## Documentation Standards & Maintenance
 
 ### File Organization
 
@@ -57,9 +57,9 @@ package.json        # Dependencies
 - Guides, references, technical docs, memos
 - Exception: Only root/documentation level if user explicitly requests or it's a high-level overview
 
-### Document Content Quality Standards
+### Content Quality Standards
 
-Technical documentation (performance reports, analysis, design decisions) must distinguish between facts, reasoning, and speculation:
+Technical documentation must distinguish between facts, reasoning, and speculation:
 
 | Type | Mark | Example |
 |------|------|---------|
@@ -69,7 +69,32 @@ Technical documentation (performance reports, analysis, design decisions) must d
 | **Estimation** | **估计** | "Estimated ~30-50 bullets (unmeasured)" |
 | **Needs Verification** | State how | "需要验证：Run X test to confirm" |
 
-**Why**: Helps future readers assess confidence levels, prevents misinterpreting hypotheses as conclusions, and guides future investigations.
+### Maintenance Rules (All future sessions MUST follow)
+
+**PLAN.md** (Future roadmap only):
+- ✅ Record pending/future features
+- ❌ Remove completed items immediately
+- 📏 Target: 150-200 lines
+
+**PROGRESS.md** (Architecture history):
+- ✅ Record technical decisions & rationale
+- ✅ Keep sessions 30-80 lines each
+- ❌ No code snippets or detailed problem-solving
+- 📏 Target: 300-400 lines total
+
+**Archive**:
+- Completed features → `archive/COMPLETED_FEATURES.md`
+- Old sessions (>4) → `archive/DETAILED_PROGRESS_*.md`
+
+### Session Checklist
+
+- [ ] Remove completed features from PLAN.md
+- [ ] Move to `archive/COMPLETED_FEATURES.md`
+- [ ] Write PROGRESS.md entry (30-80 lines, follow template)
+- [ ] Archive old sessions if needed
+- [ ] `npm run build` and commit
+
+**See detailed rules & examples**: [`documentation/memos/DOCUMENTATION_MAINTENANCE.md`](documentation/memos/DOCUMENTATION_MAINTENANCE.md)
 
 ## Development Guide
 
@@ -104,39 +129,6 @@ Modify values there to adjust gameplay without touching game logic.
 - DevTools Console: Check for errors
 - DevTools Performance: Monitor FPS, memory, GC events
 - Set `debug: true` in `src/index.js` for physics visualization
-
-## Documentation Maintenance Rules
-
-**All future development sessions MUST follow these rules.**
-
-### Quick Rules
-
-**PLAN.md** (Future roadmap only):
-- ✅ Record pending/future features
-- ❌ Remove completed items immediately
-- 📏 Target: 150-200 lines
-
-**PROGRESS.md** (Architecture history):
-- ✅ Record technical decisions & rationale
-- ✅ Keep sessions 30-80 lines each
-- ❌ No code snippets or detailed problem-solving
-- 📏 Target: 300-400 lines total
-
-**Archive**:
-- Completed features → `archive/COMPLETED_FEATURES.md`
-- Old sessions (>4) → `archive/DETAILED_PROGRESS_*.md`
-
-### Session Checklist
-
-- [ ] Remove completed features from PLAN.md
-- [ ] Move to `archive/COMPLETED_FEATURES.md`
-- [ ] Write PROGRESS.md entry (30-80 lines, follow template)
-- [ ] Archive old sessions if needed
-- [ ] `npm run build` and commit
-
-**See detailed rules**: [`documentation/memos/DOCUMENTATION_MAINTENANCE.md`](documentation/memos/DOCUMENTATION_MAINTENANCE.md)
-
----
 
 ## Key Documentation
 
