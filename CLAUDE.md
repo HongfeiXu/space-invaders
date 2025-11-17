@@ -146,16 +146,6 @@ Modify values there to adjust gameplay without touching game logic.
 - **documentation/memos/** - Technical guides
 - **documentation/archive/** - Historical details and completed features
 
-## Current Performance
-
-- **FPS**: 60+ stable (8.3-16.6ms per frame, desktop + mobile)
-- **Memory**: ~24.5 MB peak (measured in incognito mode)
-- **Code**: ~393 lines (GameScene.js, post-mobile implementation)
-- **Managers**: 6 (Audio, Score, Effects, Input, Bullet, UI)
-- **Enemies**: 15 (can support 50+)
-- **Bundle size**: 1.14 MB minified (includes Phaser)
-- **Controls**: Full multi-platform support (virtual buttons on all devices + tap-to-target on mobile)
-
 ## Git Workflow
 
 ```bash
