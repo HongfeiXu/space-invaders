@@ -57,9 +57,9 @@ module.exports = {
     FPS_X: 10,            // FPS position X
     FPS_Y: 1100,            // FPS position Y (top-left, to avoid button area)
 
-    // Virtual button configuration (mobile only, extensible)
+    // Virtual button configuration (all platforms, extensible)
     VIRTUAL_BUTTONS: {
-      ENABLED: true,                // Enable virtual buttons on mobile
+      ENABLED: true,                // Enable virtual buttons on all platforms
       BUTTON_WIDTH: 195,            // Button width (px)
       BUTTON_HEIGHT: 180,            // Button height (px)
       BUTTON_RADIUS: 0,            // Border radius for rounded corners (px)

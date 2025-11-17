@@ -120,7 +120,7 @@ Modify values there to adjust gameplay without touching game logic.
 - **Managers**: 6 (Audio, Score, Effects, Input, Bullet, UI)
 - **Enemies**: 15 (can support 50+)
 - **Bundle size**: 1.14 MB minified (includes Phaser)
-- **Mobile**: Full touch support (virtual buttons + tap-to-target)
+- **Controls**: Full multi-platform support (virtual buttons on all devices + tap-to-target on mobile)
 
 ## Git Workflow
 
