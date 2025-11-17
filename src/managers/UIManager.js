@@ -248,10 +248,10 @@ class UIManager {
         }
 
         // Check if mobile device
-        const isMobile = !this.scene.sys.game.device.os.desktop;
-        if (!isMobile) {
-            return; // Skip on desktop
-        }
+        // const isMobile = !this.scene.sys.game.device.os.desktop;
+        // if (!isMobile) {
+        //     return; // Skip on desktop
+        // }
 
         // Create Left button
         this.virtualButtons.left = this.createVirtualButton(
@@ -282,7 +282,7 @@ class UIManager {
     }
 
     /**
-     * Create a single virtual button (circular)
+     * Create a single virtual button (rectangular with rounded corners)
      * @param {number} x - X position
      * @param {number} y - Y position
      * @param {string} label - Button label text
@@ -292,14 +292,16 @@ class UIManager {
      */
     createVirtualButton(x, y, label, buttonKey, config) {
         const container = this.scene.add.container(x, y);
-        const radius = config.BUTTON_SIZE / 2;
+        const width = config.BUTTON_WIDTH;
+        const height = config.BUTTON_HEIGHT;
+        const radius = config.BUTTON_RADIUS;
 
-        // Create circle background
-        const circle = this.scene.add.graphics();
-        circle.fillStyle(0x333333, config.BUTTON_ALPHA);
-        circle.lineStyle(3, 0xffffff, 0.8);
-        circle.fillCircle(0, 0, radius);
-        circle.strokeCircle(0, 0, radius);
+        // Create rounded rectangle background
+        const rect = this.scene.add.graphics();
+        rect.fillStyle(0x000000, config.BUTTON_ALPHA);
+        rect.lineStyle(2, 0xffffff, 0.6);
+        rect.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+        rect.strokeRoundedRect(-width / 2, -height / 2, width, height, radius);
 
         // Create label text
         const buttonText = this.scene.add.text(0, 0, label, {
@@ -308,12 +310,12 @@ class UIManager {
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        container.add([circle, buttonText]);
+        container.add([rect, buttonText]);
 
-        // Make interactive
+        // Make interactive - use rectangle hit area
         container.setInteractive(
-            new Phaser.Geom.Circle(0, 0, radius),
-            Phaser.Geom.Circle.Contains
+            new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+            Phaser.Geom.Rectangle.Contains
         );
         container.setDepth(100); // Ensure buttons are above game objects
 
@@ -325,12 +327,12 @@ class UIManager {
 
         container.on('pointerup', () => {
             this.virtualButtonStates[buttonKey] = false;
-            container.setAlpha(1.0);
+            container.setAlpha(config.BUTTON_ALPHA);
         });
 
         container.on('pointerout', () => {
             this.virtualButtonStates[buttonKey] = false;
-            container.setAlpha(1.0);
+            container.setAlpha(config.BUTTON_ALPHA);
         });
 
         return container;
