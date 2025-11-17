@@ -253,9 +253,14 @@ class UIManager {
         //     return; // Skip on desktop
         // }
 
+        // Dynamically calculate button positions based on configuration
+        const gameWidth = this.scene.scale.width;
+        const rightButtonX = gameWidth - btnConfig.PADDING_RIGHT - btnConfig.BUTTON_WIDTH / 2;
+        const leftButtonX = rightButtonX - btnConfig.BUTTON_WIDTH - btnConfig.BUTTON_SPACING;
+
         // Create Left button
         this.virtualButtons.left = this.createVirtualButton(
-            btnConfig.LEFT_BUTTON.X,
+            leftButtonX,
             btnConfig.BUTTON_Y,
             btnConfig.LEFT_BUTTON.LABEL,
             'left',
@@ -264,7 +269,7 @@ class UIManager {
 
         // Create Right button
         this.virtualButtons.right = this.createVirtualButton(
-            btnConfig.RIGHT_BUTTON.X,
+            rightButtonX,
             btnConfig.BUTTON_Y,
             btnConfig.RIGHT_BUTTON.LABEL,
             'right',

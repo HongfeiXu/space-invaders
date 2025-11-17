@@ -61,24 +61,22 @@ module.exports = {
     VIRTUAL_BUTTONS: {
       ENABLED: true,                // Enable virtual buttons on mobile
       BUTTON_WIDTH: 195,            // Button width (px)
-      BUTTON_HEIGHT: 80,            // Button height (px)
-      BUTTON_RADIUS: 10,            // Border radius for rounded corners (px)
-      BUTTON_SPACING: 10,           // Spacing between buttons (px)
+      BUTTON_HEIGHT: 180,            // Button height (px)
+      BUTTON_RADIUS: 0,            // Border radius for rounded corners (px)
+      BUTTON_SPACING: 1,           // Spacing between buttons (px)
       PADDING_RIGHT: 20,            // Padding from right edge (px)
       PADDING_BOTTOM: 20,           // Padding from bottom edge (px)
-      BUTTON_Y: 540,                // Y position of button centers
+      BUTTON_Y: 1000,                // Y position of button centers
       BUTTON_ALPHA: 0.5,            // Button transparency (0.0-1.0)
       BUTTON_PRESSED_ALPHA: 0.7,    // Button transparency when pressed
 
-      // Left button
+      // Left button (X position calculated dynamically)
       LEFT_BUTTON: {
-        X: 477,                     // X position (center)
         LABEL: '←'                  // Display label
       },
 
-      // Right button
+      // Right button (X position calculated dynamically)
       RIGHT_BUTTON: {
-        X: 683,                     // X position (center)
         LABEL: '→'                  // Display label
       }
 
