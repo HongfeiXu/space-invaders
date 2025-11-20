@@ -235,18 +235,19 @@ class MenuManager {
    * @private
    */
   createPauseMenuContent(container, config) {
-    const centerX = this.scene.cameras.main.width / 2;
-    const centerY = this.scene.cameras.main.height / 2;
+    // Import MenuConfig if needed
+    const MenuConfig = require('../config/MenuConfig');
+    const pauseConfig = MenuConfig.PAUSE_MENU;
 
     // 创建标题
     const title = this.scene.add.text(
       0,
       -100,
-      'PAUSED',
+      pauseConfig.TITLE,
       {
-        fontSize: '50px',
-        fill: '#fff',
-        fontStyle: 'bold',
+        fontSize: pauseConfig.TITLE_FONT_SIZE,
+        fill: pauseConfig.TITLE_COLOR,
+        fontStyle: pauseConfig.TITLE_FONT_STYLE,
         align: 'center'
       }
     ).setOrigin(0.5);
@@ -255,20 +256,32 @@ class MenuManager {
     // 创建 Resume 按钮
     const resumeBtn = this.createButton(
       0,
-      0,
+      pauseConfig.RESUME_Y,
       'Resume',
       config.onResume,
-      { width: 180, height: 50, fontSize: '24px', fillColor: '#4CAF50' }
+      {
+        width: pauseConfig.BUTTON_WIDTH,
+        height: pauseConfig.BUTTON_HEIGHT,
+        fontSize: pauseConfig.BUTTON_FONT_SIZE,
+        fillColor: pauseConfig.BUTTON_COLOR,
+        textColor: pauseConfig.BUTTON_TEXT_COLOR
+      }
     );
     container.add(resumeBtn);
 
     // 创建 Restart 按钮
     const restartBtn = this.createButton(
       0,
-      70,
+      pauseConfig.RESTART_Y,
       'Restart',
       config.onRestart,
-      { width: 180, height: 50, fontSize: '24px', fillColor: '#ff6b6b' }
+      {
+        width: pauseConfig.BUTTON_WIDTH,
+        height: pauseConfig.BUTTON_HEIGHT,
+        fontSize: pauseConfig.BUTTON_FONT_SIZE,
+        fillColor: '#ff6b6b',
+        textColor: pauseConfig.BUTTON_TEXT_COLOR
+      }
     );
     container.add(restartBtn);
 
@@ -280,8 +293,11 @@ class MenuManager {
    * @private
    */
   createGameOverMenuContent(container, config) {
+    const MenuConfig = require('../config/MenuConfig');
+    const gameOverConfig = MenuConfig.GAMEOVER_MENU;
+
     // 构建游戏结束消息
-    let gameOverMessage = 'GAME OVER\n';
+    let gameOverMessage = gameOverConfig.TITLE + '\n';
     gameOverMessage += 'Score: ' + config.score + '\n';
     gameOverMessage += 'High Score: ' + config.highScore;
     if (config.isNewRecord) {
@@ -291,11 +307,11 @@ class MenuManager {
     // 创建文本
     const text = this.scene.add.text(
       0,
-      -60,
+      gameOverConfig.MESSAGE_Y,
       gameOverMessage,
       {
-        fontSize: '40px',
-        fill: config.isNewRecord ? '#FFD700' : '#fff',
+        fontSize: gameOverConfig.MESSAGE_FONT_SIZE,
+        fill: config.isNewRecord ? '#FFD700' : gameOverConfig.MESSAGE_COLOR,
         align: 'center'
       }
     ).setOrigin(0.5);
@@ -304,10 +320,15 @@ class MenuManager {
     // 创建 Restart 按钮
     const restartBtn = this.createButton(
       0,
-      100,
+      gameOverConfig.BUTTON_Y,
       'Restart',
       config.onRestart,
-      { width: 200, height: 60, fontSize: '28px', fillColor: '#ff6b6b' }
+      {
+        width: gameOverConfig.BUTTON_WIDTH,
+        height: gameOverConfig.BUTTON_HEIGHT,
+        fontSize: gameOverConfig.BUTTON_FONT_SIZE,
+        fillColor: gameOverConfig.BUTTON_COLOR
+      }
     );
     container.add(restartBtn);
 
@@ -319,15 +340,18 @@ class MenuManager {
    * @private
    */
   createVictoryMenuContent(container, config) {
+    const MenuConfig = require('../config/MenuConfig');
+    const victoryConfig = MenuConfig.VICTORY_MENU;
+
     // 创建标题
     const title = this.scene.add.text(
       0,
-      -100,
-      '🎉 恭喜通关！🎉',
+      victoryConfig.TITLE_Y,
+      victoryConfig.TITLE,
       {
-        fontSize: '50px',
-        fill: '#FFD700',
-        fontStyle: 'bold',
+        fontSize: victoryConfig.TITLE_FONT_SIZE,
+        fill: victoryConfig.TITLE_COLOR,
+        fontStyle: victoryConfig.TITLE_FONT_STYLE,
         align: 'center'
       }
     ).setOrigin(0.5);
@@ -336,11 +360,11 @@ class MenuManager {
     // 创建统计信息
     const stats = this.scene.add.text(
       0,
-      0,
+      victoryConfig.STATS_Y,
       `Score: ${config.score}\nLives: ${config.lives}`,
       {
-        fontSize: '30px',
-        fill: '#fff',
+        fontSize: victoryConfig.STATS_FONT_SIZE,
+        fill: victoryConfig.STATS_COLOR,
         align: 'center'
       }
     ).setOrigin(0.5);
@@ -349,21 +373,26 @@ class MenuManager {
     // 创建 Continue 按钮
     const continueBtn = this.createButton(
       0,
-      110,
+      victoryConfig.BUTTON_Y,
       'Continue',
       config.onContinue,
-      { width: 200, height: 60, fontSize: '28px', fillColor: '#FFD700' }
+      {
+        width: victoryConfig.BUTTON_WIDTH,
+        height: victoryConfig.BUTTON_HEIGHT,
+        fontSize: victoryConfig.BUTTON_FONT_SIZE,
+        fillColor: victoryConfig.BUTTON_COLOR
+      }
     );
     container.add(continueBtn);
 
     // 创建提示文字
     const hint = this.scene.add.text(
       0,
-      180,
+      victoryConfig.HINT_Y,
       '(Restart from Wave 1)',
       {
-        fontSize: '18px',
-        fill: '#aaa',
+        fontSize: victoryConfig.HINT_FONT_SIZE,
+        fill: victoryConfig.HINT_COLOR,
         align: 'center'
       }
     ).setOrigin(0.5);
