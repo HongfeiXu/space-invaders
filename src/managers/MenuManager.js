@@ -1,10 +1,66 @@
 /**
  * MenuManager - 通用菜单系统管理器
+ *
  * 职责：
  * - 管理游戏菜单的显示、隐藏、栈管理
  * - 统一处理菜单的 depth、overlay、背景遮罩
  * - 支持菜单嵌套（菜单栈）
  * - 为各类菜单提供统一的创建和销毁接口
+ *
+ * ==================== 如何添加新菜单 ====================
+ *
+ * 步骤 1：在 MenuConfig.js 中添加配置
+ * ```javascript
+ * const MenuConfig = {
+ *   MY_MENU: {
+ *     TITLE_FONT_SIZE: '40px',
+ *     BUTTON_WIDTH: 200,
+ *     // ... other styles
+ *   }
+ * };
+ * ```
+ *
+ * 步骤 2：在 createMenuContent() 方法中添加 case 分支
+ * ```javascript
+ * case 'myMenu':
+ *   return this.createMyMenuContent(container, menuConfig);
+ * ```
+ *
+ * 步骤 3：实现 createMyMenuContent() 方法
+ * ```javascript
+ * createMyMenuContent(container, config) {
+ *   // 使用 this.scene.add.text/rectangle 等创建 UI 元素
+ *   // 使用 this.createButton() 创建按钮
+ *   // 使用 container.add() 将元素添加到容器
+ *   // 记住所有元素都是相对于容器中心的坐标
+ *   return container;
+ * }
+ * ```
+ *
+ * Step 4: Call showMenu() in game code
+ * ```javascript
+ * this.uiManager.menuManager.showMenu('myMenu', {
+ *   data: someData,
+ *   onConfirm: () => { ... },
+ *   onCancel: () => { ... }
+ * });
+ * ```
+ *
+ * ==================== 已实现菜单 ====================
+ * ✅ pause     - 暂停菜单（Phase 2）
+ * ✅ gameOver  - 游戏结束菜单（Phase 2）
+ * ✅ victory   - 通关菜单（Phase 2）
+ *
+ * ==================== 计划菜单 ====================
+ * ⏳ upgrade   - 升级菜单（Phase 4）
+ * ⏳ main      - 主菜单（Phase 5）
+ * ⏳ settings  - 设置菜单（Future）
+ *
+ * ==================== Depth 分层 ====================
+ * - depth 0:   游戏对象 (player, enemies, bullets)
+ * - depth 90:  菜单背景遮罩
+ * - depth 100: 菜单内容 (buttons, text)
+ * 这确保菜单永远显示在游戏对象上方
  */
 
 class MenuManager {
@@ -318,31 +374,98 @@ class MenuManager {
 
   /**
    * 创建升级菜单内容
-   * TODO: Phase 4 实现
+   *
+   * 预期功能（Phase 4）：
+   * - 显示 3-4 个升级选项（攻击、防御、特殊能力）
+   * - 每个选项显示为卡片/按钮
+   * - 用户选择一个升级后游戏继续
+   * - 应用升级到玩家属性
+   *
+   * 使用示例：
+   * ```javascript
+   * gameScene.uiManager.menuManager.showMenu('upgrade', {
+   *   options: [
+   *     { name: 'Double Shot', description: 'Fire 2 bullets' },
+   *     { name: 'Shield', description: 'Reduce damage by 50%' }
+   *   ],
+   *   onSelect: (selectedOption) => {
+   *     upgradeManager.applyUpgrade(selectedOption);
+   *   }
+   * });
+   * ```
+   *
+   * @param {Phaser.GameObjects.Container} container - 菜单容器
+   * @param {object} config - 配置对象 { options, onSelect }
+   * @returns {Phaser.GameObjects.Container} 更新后的容器
    * @private
+   * @todo Implement in Phase 4 - Player Upgrade System
    */
   createUpgradeMenuContent(container, config) {
-    // 占位符
+    // TODO: Implement upgrade menu with option cards
+    // Reference: MenuConfig.UPGRADE_MENU for style parameters
     return container;
   }
 
   /**
    * 创建主菜单内容
-   * TODO: Phase 5 实现
+   *
+   * 预期功能（Phase 5）：
+   * - 游戏启动时显示
+   * - 包含：游戏标题、开始游戏、排行榜、设置按钮
+   * - 背景音乐循环播放
+   * - 支持菜单嵌套（设置菜单在主菜单内打开）
+   *
+   * 使用示例：
+   * ```javascript
+   * // 在 PreloadScene 或单独的 MenuScene 中使用
+   * this.uiManager.menuManager.showMenu('main', {
+   *   onStart: () => this.scene.start('GameScene'),
+   *   onLeaderboard: () => this.uiManager.menuManager.showMenu('leaderboard', ...),
+   *   onSettings: () => this.uiManager.menuManager.showMenu('settings', ...)
+   * });
+   * ```
+   *
+   * @param {Phaser.GameObjects.Container} container - 菜单容器
+   * @param {object} config - 配置对象 { onStart, onLeaderboard, onSettings }
+   * @returns {Phaser.GameObjects.Container} 更新后的容器
    * @private
+   * @todo Implement in Phase 5 - Main Menu System
    */
   createMainMenuContent(container, config) {
-    // 占位符
+    // TODO: Implement main menu with title and navigation buttons
+    // Reference: MenuConfig.MAIN_MENU for style parameters
     return container;
   }
 
   /**
    * 创建设置菜单内容
-   * TODO: 未来实现
+   *
+   * 预期功能：
+   * - 音量控制（背景音乐、音效）
+   * - 视频设置（FPS 显示开关等）
+   * - 返回上级菜单按钮
+   * - 支持菜单栈：可从主菜单或暂停菜单打开
+   *
+   * 使用示例：
+   * ```javascript
+   * this.uiManager.menuManager.showMenu('settings', {
+   *   currentVolume: 0.8,
+   *   showFPS: true,
+   *   onSave: (settings) => {
+   *     gameConfig.updateSettings(settings);
+   *   }
+   * });
+   * ```
+   *
+   * @param {Phaser.GameObjects.Container} container - 菜单容器
+   * @param {object} config - 配置对象 { currentVolume, showFPS, onSave }
+   * @returns {Phaser.GameObjects.Container} 更新后的容器
    * @private
+   * @todo Implement in future - Settings Menu System
    */
   createSettingsMenuContent(container, config) {
-    // 占位符
+    // TODO: Implement settings menu with audio and video controls
+    // Reference: MenuConfig.SETTINGS_MENU for style parameters (if needed)
     return container;
   }
 

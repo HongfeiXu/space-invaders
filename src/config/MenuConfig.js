@@ -106,6 +106,25 @@ const MenuConfig = {
     BUTTON_FONT_SIZE: '28px',
     BUTTON_COLOR: '#00ff00',
     BUTTON_TEXT_COLOR: '#000'
+  },
+
+  // ==================== 设置菜单配置（预留扩展） ====================
+  SETTINGS_MENU: {
+    TITLE: 'Settings',
+    TITLE_FONT_SIZE: '50px',
+    TITLE_COLOR: '#fff',
+    TITLE_FONT_STYLE: 'bold',
+
+    LABEL_FONT_SIZE: '24px',
+    LABEL_COLOR: '#fff',
+
+    SLIDER_WIDTH: 200,
+    SLIDER_HEIGHT: 10,
+
+    BUTTON_WIDTH: 150,
+    BUTTON_HEIGHT: 50,
+    BUTTON_FONT_SIZE: '24px',
+    BUTTON_COLOR: '#4CAF50'
   }
 };
 
