@@ -7,6 +7,7 @@
 
 const Phaser = require('phaser');
 const GameConfig = require('../config/GameConfig');
+const MenuManager = require('./MenuManager');
 
 class UIManager {
     /**
@@ -16,6 +17,9 @@ class UIManager {
     constructor(scene, scoreManager) {
         this.scene = scene;
         this.scoreManager = scoreManager;
+
+        // Initialize menu manager
+        this.menuManager = new MenuManager(scene);
 
         // HUD text objects
         this.waveText = null;
@@ -404,47 +408,22 @@ class UIManager {
     }
 
     /**
-     * Show pause menu
+     * Show pause menu (delegated to MenuManager)
      * @param {Function} onResume - Resume callback
      * @param {Function} onRestart - Restart callback
      */
     showPauseMenu(onResume, onRestart) {
-        if (this.pauseText) {
-            this.pauseText.setVisible(true);
-        }
-        if (this.pauseResumeButton) {
-            // Update callback and show
-            this.pauseResumeButton.removeAllListeners('pointerup');
-            this.pauseResumeButton.on('pointerup', () => {
-                this.pauseResumeButton.setScale(1);
-                onResume();
-            });
-            this.pauseResumeButton.setVisible(true);
-        }
-        if (this.pauseRestartButton) {
-            // Update callback and show
-            this.pauseRestartButton.removeAllListeners('pointerup');
-            this.pauseRestartButton.on('pointerup', () => {
-                this.pauseRestartButton.setScale(1);
-                onRestart();
-            });
-            this.pauseRestartButton.setVisible(true);
-        }
+        this.menuManager.showMenu('pause', {
+            onResume: onResume,
+            onRestart: onRestart
+        });
     }
 
     /**
-     * Hide pause menu
+     * Hide pause menu (delegated to MenuManager)
      */
     hidePauseMenu() {
-        if (this.pauseText) {
-            this.pauseText.setVisible(false);
-        }
-        if (this.pauseResumeButton) {
-            this.pauseResumeButton.setVisible(false);
-        }
-        if (this.pauseRestartButton) {
-            this.pauseRestartButton.setVisible(false);
-        }
+        this.menuManager.hideMenu('pause');
     }
 
     /**
@@ -475,43 +454,23 @@ class UIManager {
     }
 
     /**
-     * Show game over screen
+     * Show game over screen (delegated to MenuManager)
      * @param {number} score - Final score
      * @param {number} highScore - High score
      * @param {boolean} isNewRecord - Whether it's a new record
      * @param {Function} onRestart - Restart callback
      */
     showGameOver(score, highScore, isNewRecord, onRestart) {
-        let gameOverMessage = 'GAME OVER\n';
-        gameOverMessage += 'Score: ' + score + '\n';
-        gameOverMessage += 'High Score: ' + highScore;
-        if (isNewRecord) {
-            gameOverMessage += '\n🎉 NEW RECORD! 🎉';
-        }
-
-        const gameOverText = this.scene.add.text(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2 - 60,
-            gameOverMessage,
-            {
-                fontSize: '40px',
-                fill: isNewRecord ? '#FFD700' : '#fff',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        // Restart button
-        this.createButton(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2 + 100,
-            'Restart',
-            onRestart,
-            { width: 200, height: 60, fontSize: '28px' }
-        );
+        this.menuManager.showMenu('gameOver', {
+            score: score,
+            highScore: highScore,
+            isNewRecord: isNewRecord,
+            onRestart: onRestart
+        });
     }
 
     /**
-     * Show victory screen
+     * Show victory screen (delegated to MenuManager)
      * @param {number} score - Final score
      * @param {number} lives - Remaining lives
      * @param {Function} onContinue - Continue callback
@@ -520,47 +479,11 @@ class UIManager {
         // Clean up any existing victory elements
         this.hideVictory();
 
-        this.victoryTitle = this.scene.add.text(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2 - 100,
-            '🎉 恭喜通关！🎉',
-            {
-                fontSize: '50px',
-                fill: '#FFD700',
-                fontStyle: 'bold',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        this.statsText = this.scene.add.text(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2,
-            `Score: ${score}\nLives: ${lives}`,
-            {
-                fontSize: '30px',
-                fill: '#fff',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
-
-        this.continueButton = this.createButton(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2 + 110,
-            'Continue',
-            onContinue,
-            { width: 200, height: 60, fontSize: '28px' }
-        );
-
-        this.continueHint = this.scene.add.text(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2 + 180,
-            '(Restart from Wave 1)',
-            {
-                fontSize: '18px',
-                fill: '#aaa',
-                align: 'center'
-            }
-        ).setOrigin(0.5);
+        this.menuManager.showMenu('victory', {
+            score: score,
+            lives: lives,
+            onContinue: onContinue
+        });
     }
 
     /**
@@ -589,6 +512,11 @@ class UIManager {
      * Cleanup all UI resources
      */
     shutdown() {
+        // Cleanup menu manager
+        if (this.menuManager) {
+            this.menuManager.shutdown();
+        }
+
         // Destroy HUD elements
         if (this.waveText) this.waveText.destroy();
         if (this.highScoreText) this.highScoreText.destroy();
