@@ -118,6 +118,14 @@ Modify values there to adjust gameplay without touching game logic.
 | `src/config/GameConfig.js` | All game parameters |
 | `webpack.config.js` | Build configuration + HtmlWebpackPlugin |
 
+### Code Style
+- **Indentation**: 4 spaces (all files)
+- **Comments**: Chinese preferred (matching codebase convention)
+- **Module system**: CommonJS (require/module.exports)
+- **Class naming**: PascalCase (MenuManager, UIManager, GameScene, etc.)
+- **Method naming**: camelCase (showMenu, hideMenu, createOverlay, etc.)
+- **Constants in config files**: SCREAMING_SNAKE_CASE (OVERLAY, DEPTH, BUTTON_WIDTH, etc.)
+
 ## Development Workflow
 
 ```bash
