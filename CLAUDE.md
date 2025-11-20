@@ -82,9 +82,12 @@ Technical documentation must distinguish between facts, reasoning, and speculati
 - ❌ No code snippets or detailed problem-solving
 - 📏 Target: 300-400 lines total
 
-**Archive**:
+**Archive** (Rolling archive pattern):
 - Completed features → `archive/COMPLETED_FEATURES.md`
-- Old sessions (>4) → `archive/DETAILED_PROGRESS_*.md`
+- Old sessions (>4) → `archive/DETAILED_PROGRESS_SESSIONS_X-Y.md`
+  - Naming: `SESSIONS_1-5.md`, `SESSIONS_6-9.md`, `SESSIONS_10-...md`
+  - Trigger: When PROGRESS.md approaches 400 lines
+  - Action: Archive oldest 5 sessions, keep newest in PROGRESS.md
 
 ### Session Checklist
 
