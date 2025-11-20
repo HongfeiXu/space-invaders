@@ -98,6 +98,36 @@
 
 ---
 
+## 会话 6 - 通用菜单系统 + 代码架构优化
+
+**时间**: 2025-11-21
+**影响**: High
+**成果**: 完整的可扩展菜单系统（Phase 1-3 完成）
+
+### 关键成就
+- **MenuManager** (~470行): 通用菜单管理系统，支持菜单栈
+- **Phase 1**: 核心框架 - Overlay(depth=90) + Menu(depth=100) 分层
+- **Phase 2**: 三个菜单实现 - 暂停、游戏结束、通关
+- **Phase 3**: 扩展框架 - 为 upgrade/main/settings 菜单预留占位符
+- **暂停按钮图标**: 动态切换 ❚❚ (暂停) / ▶ (继续)
+
+### 架构改进
+- **职责分离**: UIManager(HUD) ≠ MenuManager(菜单)
+- **Depth 管理**: 确保菜单永不被游戏对象覆盖
+- **菜单栈支持**: 支持菜单嵌套（如升级菜单在暂停中打开）
+- **零改动扩展**: 添加新菜单仅需 4 步（配置、case、方法、调用）
+
+### 技术决策
+- **MenuManager 委托模式**: UIManager 将菜单操作委托给 MenuManager
+- **Container 相对坐标**: 菜单元素坐标相对于容器中心，便于布局
+- **JSDoc 详细文档**: 每个占位方法都包含预期功能、使用示例、参考配置
+
+### 关键洞察
+- 菜单栈设计为未来扩展做好基础（目前用不到但框架已就绪）
+- Webpack 对代码注释中的特殊字符敏感（/\* \*/ 在注释中需谨慎）
+
+---
+
 ## 会话 5 - 移动端适配 + 虚拟按钮 + 响应式设计
 
 **时间**: 2025-11-15~16
@@ -128,16 +158,35 @@
 
 ## 核心架构
 
-### Manager 模式（6个专职管理器）
+### Manager 模式（7个专职管理器）
 ```
 GameScene
-├── AudioManager      - 背景音乐
+├── AudioManager      - 背景音乐和音效
 ├── ScoreManager      - 分数和高分
-├── EffectsManager    - 视觉效果
+├── EffectsManager    - 视觉效果（闪烁、HIT!文字、粒子等）
 ├── InputManager      - 键盘、虚拟按钮、触摸输入
 ├── BulletManager     - 子弹生命周期
-└── UIManager         - HUD、菜单、虚拟按钮
+├── UIManager         - HUD、虚拟按钮
+│   └── MenuManager   - 菜单系统（暂停、游戏结束、通关、升级等）
+└── Config
+    ├── GameConfig    - 游戏参数
+    └── MenuConfig    - 菜单样式参数
 ```
+
+### 菜单系统层级
+```
+Depth 100: 菜单内容（按钮、文字）
+Depth 90:  背景遮罩（70% 透明黑）
+Depth 0:   游戏对象（玩家、敌人、子弹、HUD文字）
+```
+
+### 已实现菜单
+- ✅ pause（暂停菜单）
+- ✅ gameOver（游戏结束）
+- ✅ victory（通关屏幕）
+- ⏳ upgrade（Phase 4 - 玩家升级）
+- ⏳ main（Phase 5 - 主菜单）
+- ⏳ settings（Future - 设置菜单）
 
 ### 性能指标
 - **代码**: ~393 行 (GameScene.js)
@@ -154,4 +203,4 @@ GameScene
 - **开发计划**: [`PLAN.md`](PLAN.md)
 - **已完成功能**: [`archive/COMPLETED_FEATURES.md`](archive/COMPLETED_FEATURES.md)
 
-*最后更新: 2025-11-17*
+*最后更新: 2025-11-21*
