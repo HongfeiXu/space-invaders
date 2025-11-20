@@ -98,6 +98,8 @@ class GameScene extends Phaser.Scene {
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = true;
             }
+            // 更新暂停按钮图标为"播放"
+            this.uiManager.updatePauseButtonIcon(true);
         } else {
             this.physics.resume();
             this.uiManager.hidePauseMenu();
@@ -107,6 +109,8 @@ class GameScene extends Phaser.Scene {
             if (this.enemyFireTimer) {
                 this.enemyFireTimer.paused = false;
             }
+            // 更新暂停按钮图标为"暂停"
+            this.uiManager.updatePauseButtonIcon(false);
         }
     }
 

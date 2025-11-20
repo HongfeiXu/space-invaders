@@ -456,6 +456,25 @@ class UIManager {
     }
 
     /**
+     * Update pause button icon based on game state
+     * @param {boolean} isPaused - Whether the game is paused
+     */
+    updatePauseButtonIcon(isPaused) {
+        if (!this.pauseButton) return;
+
+        // Determine icon based on pause state
+        const icon = isPaused ? '▶' : '❚❚';
+
+        // Find and update the text child in the button container
+        const buttonChildren = this.pauseButton.list;
+        const textObject = buttonChildren.find(child => child.type === 'Text');
+
+        if (textObject) {
+            textObject.setText(icon);
+        }
+    }
+
+    /**
      * Show game over screen
      * @param {number} score - Final score
      * @param {number} highScore - High score
