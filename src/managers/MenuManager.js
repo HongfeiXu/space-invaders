@@ -176,31 +176,143 @@ class MenuManager {
 
   /**
    * 创建暂停菜单内容
-   * TODO: Phase 2 实现具体内容，现在返回占位符
    * @private
    */
   createPauseMenuContent(container, config) {
-    // 占位符：Phase 2 时实现
+    const centerX = this.scene.cameras.main.width / 2;
+    const centerY = this.scene.cameras.main.height / 2;
+
+    // 创建标题
+    const title = this.scene.add.text(
+      0,
+      -100,
+      'PAUSED',
+      {
+        fontSize: '50px',
+        fill: '#fff',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    container.add(title);
+
+    // 创建 Resume 按钮
+    const resumeBtn = this.createButton(
+      0,
+      0,
+      'Resume',
+      config.onResume,
+      { width: 180, height: 50, fontSize: '24px', fillColor: '#4CAF50' }
+    );
+    container.add(resumeBtn);
+
+    // 创建 Restart 按钮
+    const restartBtn = this.createButton(
+      0,
+      70,
+      'Restart',
+      config.onRestart,
+      { width: 180, height: 50, fontSize: '24px', fillColor: '#ff6b6b' }
+    );
+    container.add(restartBtn);
+
     return container;
   }
 
   /**
    * 创建游戏结束菜单内容
-   * TODO: Phase 2 实现具体内容，现在返回占位符
    * @private
    */
   createGameOverMenuContent(container, config) {
-    // 占位符：Phase 2 时实现
+    // 构建游戏结束消息
+    let gameOverMessage = 'GAME OVER\n';
+    gameOverMessage += 'Score: ' + config.score + '\n';
+    gameOverMessage += 'High Score: ' + config.highScore;
+    if (config.isNewRecord) {
+      gameOverMessage += '\n🎉 NEW RECORD! 🎉';
+    }
+
+    // 创建文本
+    const text = this.scene.add.text(
+      0,
+      -60,
+      gameOverMessage,
+      {
+        fontSize: '40px',
+        fill: config.isNewRecord ? '#FFD700' : '#fff',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    container.add(text);
+
+    // 创建 Restart 按钮
+    const restartBtn = this.createButton(
+      0,
+      100,
+      'Restart',
+      config.onRestart,
+      { width: 200, height: 60, fontSize: '28px', fillColor: '#ff6b6b' }
+    );
+    container.add(restartBtn);
+
     return container;
   }
 
   /**
    * 创建通关菜单内容
-   * TODO: Phase 2 实现具体内容，现在返回占位符
    * @private
    */
   createVictoryMenuContent(container, config) {
-    // 占位符：Phase 2 时实现
+    // 创建标题
+    const title = this.scene.add.text(
+      0,
+      -100,
+      '🎉 恭喜通关！🎉',
+      {
+        fontSize: '50px',
+        fill: '#FFD700',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    container.add(title);
+
+    // 创建统计信息
+    const stats = this.scene.add.text(
+      0,
+      0,
+      `Score: ${config.score}\nLives: ${config.lives}`,
+      {
+        fontSize: '30px',
+        fill: '#fff',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    container.add(stats);
+
+    // 创建 Continue 按钮
+    const continueBtn = this.createButton(
+      0,
+      110,
+      'Continue',
+      config.onContinue,
+      { width: 200, height: 60, fontSize: '28px', fillColor: '#FFD700' }
+    );
+    container.add(continueBtn);
+
+    // 创建提示文字
+    const hint = this.scene.add.text(
+      0,
+      180,
+      '(Restart from Wave 1)',
+      {
+        fontSize: '18px',
+        fill: '#aaa',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    container.add(hint);
+
     return container;
   }
 
