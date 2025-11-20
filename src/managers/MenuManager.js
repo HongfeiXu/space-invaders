@@ -65,10 +65,11 @@
 
 class MenuManager {
   constructor(scene) {
+    const MenuConfig = require('../config/MenuConfig');
     this.scene = scene;
     this.menuStack = [];        // 菜单栈：[{ name, config, elements }, ...]
-    this.overlayDepth = 90;     // 背景遮罩深度
-    this.menuDepth = 100;       // 菜单容器深度
+    this.overlayDepth = MenuConfig.DEPTH.OVERLAY;
+    this.menuDepth = MenuConfig.DEPTH.MENU;
   }
 
   /**
@@ -189,17 +190,23 @@ class MenuManager {
    * @returns {Phaser.GameObjects.Rectangle}
    */
   createOverlay() {
+    const MenuConfig = require('../config/MenuConfig');
+    const overlayConfig = MenuConfig.OVERLAY;
+    const depthConfig = MenuConfig.DEPTH;
+
     const overlay = this.scene.add.rectangle(
       this.scene.cameras.main.width / 2,
       this.scene.cameras.main.height / 2,
       this.scene.cameras.main.width,
       this.scene.cameras.main.height,
-      0x000000,    // 黑色
-      0.7          // 70% 不透明度
+      overlayConfig.COLOR,
+      overlayConfig.ALPHA
     );
 
-    overlay.setInteractive();  // 阻止鼠标穿透到背后
-    overlay.setDepth(this.overlayDepth);  // depth = 90
+    if (overlayConfig.INTERACTIVE) {
+      overlay.setInteractive();  // 阻止鼠标穿透到背后
+    }
+    overlay.setDepth(depthConfig.OVERLAY);
 
     return overlay;
   }
@@ -564,11 +571,13 @@ class MenuManager {
   shutdown() {
     // 隐藏并销毁所有菜单
     this.menuStack.forEach(menu => {
-      if (menu.elements.overlay) {
-        menu.elements.overlay.destroy();
-      }
-      if (menu.elements.container) {
-        menu.elements.container.destroy();
+      if (menu.elements) {
+        if (menu.elements.overlay) {
+          menu.elements.overlay.destroy();
+        }
+        if (menu.elements.container) {
+          menu.elements.container.destroy();
+        }
       }
     });
 

@@ -34,12 +34,6 @@ class UIManager {
         this.pauseRestartButton = null;
         this.pauseButton = null;
 
-        // Victory screen objects
-        this.victoryTitle = null;
-        this.statsText = null;
-        this.continueButton = null;
-        this.continueHint = null;
-
         // Virtual buttons (mobile only)
         this.virtualButtons = {
             left: null,
@@ -476,36 +470,11 @@ class UIManager {
      * @param {Function} onContinue - Continue callback
      */
     showVictory(score, lives, onContinue) {
-        // Clean up any existing victory elements
-        this.hideVictory();
-
         this.menuManager.showMenu('victory', {
             score: score,
             lives: lives,
             onContinue: onContinue
         });
-    }
-
-    /**
-     * Hide victory screen
-     */
-    hideVictory() {
-        if (this.victoryTitle) {
-            this.victoryTitle.destroy();
-            this.victoryTitle = null;
-        }
-        if (this.statsText) {
-            this.statsText.destroy();
-            this.statsText = null;
-        }
-        if (this.continueButton) {
-            this.continueButton.destroy();
-            this.continueButton = null;
-        }
-        if (this.continueHint) {
-            this.continueHint.destroy();
-            this.continueHint = null;
-        }
     }
 
     /**
@@ -533,9 +502,6 @@ class UIManager {
         // Destroy virtual buttons
         if (this.virtualButtons.left) this.virtualButtons.left.destroy();
         if (this.virtualButtons.right) this.virtualButtons.right.destroy();
-
-        // Destroy victory screen
-        this.hideVictory();
 
         // Clear references
         this.waveText = null;
