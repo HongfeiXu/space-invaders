@@ -1,6 +1,6 @@
 # 开发进度
 
-> **📚 完整历史**：会话 1-2 详细记录请查看 [`archive/DETAILED_PROGRESS_SESSIONS_1-2.md`](archive/DETAILED_PROGRESS_SESSIONS_1-2.md)
+> **📚 完整历史**：会话 1-5 详细记录请查看 [`archive/DETAILED_PROGRESS_SESSIONS_1-5.md`](archive/DETAILED_PROGRESS_SESSIONS_1-5.md)
 
 本文档记录会话 3-6 的技术决策和架构演进。
 
@@ -218,7 +218,7 @@ Depth 0:   游戏对象（玩家、敌人、HUD）  - 底层
 ## 参考资源
 
 - **开发计划**: [`PLAN.md`](PLAN.md) - 未来功能待办清单
-- **会话 1-2 详细记录**: [`archive/DETAILED_PROGRESS_SESSIONS_1-2.md`](archive/DETAILED_PROGRESS_SESSIONS_1-2.md)
+- **会话 1-5 详细记录**: [`archive/DETAILED_PROGRESS_SESSIONS_1-5.md`](archive/DETAILED_PROGRESS_SESSIONS_1-5.md)
 - **已完成功能列表**: [`archive/COMPLETED_FEATURES.md`](archive/COMPLETED_FEATURES.md)
 - **菜单系统设计**: [`memos/menu-system-architecture-plan.md`](memos/menu-system-architecture-plan.md)
 - **玩家升级设计**: [`memos/player-upgrade-system-plan.md`](memos/player-upgrade-system-plan.md)
