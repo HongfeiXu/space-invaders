@@ -52,8 +52,8 @@ class MenuManager {
     }
 
     const menu = this.menuStack[index];
-    menu.overlay.setVisible(false);
-    menu.container.setVisible(false);
+    menu.elements.overlay.setVisible(false);
+    menu.elements.container.setVisible(false);
 
     // 从栈中移除
     this.menuStack.splice(index, 1);
@@ -71,8 +71,10 @@ class MenuManager {
    */
   hideAllMenus() {
     this.menuStack.forEach(menu => {
-      menu.elements.overlay.setVisible(false);
-      menu.elements.container.setVisible(false);
+      if (menu.elements) {
+        menu.elements.overlay.setVisible(false);
+        menu.elements.container.setVisible(false);
+      }
     });
     this.menuStack = [];
   }
