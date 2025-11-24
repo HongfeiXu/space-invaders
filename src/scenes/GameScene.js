@@ -68,15 +68,17 @@ class GameScene extends Phaser.Scene {
             this.togglePause();
         });
 
-        // Register GM test button callback
+        // Register GM test button callback (if enabled)
         const gmButton = this.uiManager.getGMButton();
-        gmButton.removeAllListeners('pointerup');
-        gmButton.on('pointerup', () => {
-            gmButton.setScale(1);
-            if (!this.gameOver && !this.isPaused) {
-                this.killAllEnemies();
-            }
-        });
+        if (gmButton) {
+            gmButton.removeAllListeners('pointerup');
+            gmButton.on('pointerup', () => {
+                gmButton.setScale(1);
+                if (!this.gameOver && !this.isPaused) {
+                    this.killAllEnemies();
+                }
+            });
+        }
 
         // 同步当前波次到 BulletManager（影响瞄准概率）
         this.bulletManager.setCurrentWave(this.currentWave);
@@ -84,7 +86,7 @@ class GameScene extends Phaser.Scene {
         // 敌人射击定时器
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
+            callback: () => this.bulletManager.triggerEnemyShot(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });
@@ -335,7 +337,7 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: newInterval,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
+            callback: () => this.bulletManager.triggerEnemyShot(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });
@@ -380,7 +382,7 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
+            callback: () => this.bulletManager.triggerEnemyShot(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });

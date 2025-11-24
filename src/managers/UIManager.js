@@ -158,20 +158,22 @@ class UIManager {
             }
         );
 
-        // GM test button (below pause button)
-        this.gmButton = this.createButton(
-            this.scene.cameras.main.width - 80,
-            95,
-            'GM',
-            null, // Callback will be set externally
-            {
-                width: 60,
-                height: 40,
-                fontSize: '18px',
-                bgColor: 0xff0000,
-                bgAlpha: 0.8
-            }
-        );
+        // GM test button (below pause button) - only in debug mode
+        if (GameConfig.DEBUG.ENABLE_GM_TOOLS) {
+            this.gmButton = this.createButton(
+                this.scene.cameras.main.width - 80,
+                95,
+                'GM',
+                null, // Callback will be set externally
+                {
+                    width: 60,
+                    height: 40,
+                    fontSize: '18px',
+                    bgColor: 0xff0000,
+                    bgAlpha: 0.8
+                }
+            );
+        }
 
         // Create virtual buttons for mobile
         this.createVirtualButtons();
@@ -525,6 +527,9 @@ class UIManager {
         if (this.pauseRestartButton) this.pauseRestartButton.destroy();
         if (this.pauseButton) this.pauseButton.destroy();
 
+        // Destroy GM button
+        if (this.gmButton) this.gmButton.destroy();
+
         // Destroy virtual buttons
         if (this.virtualButtons.left) this.virtualButtons.left.destroy();
         if (this.virtualButtons.right) this.virtualButtons.right.destroy();
@@ -539,6 +544,7 @@ class UIManager {
         this.pauseResumeButton = null;
         this.pauseRestartButton = null;
         this.pauseButton = null;
+        this.gmButton = null;
         this.virtualButtons = { left: null, right: null };
         this.virtualButtonStates = { left: false, right: false };
     }

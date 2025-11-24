@@ -39,7 +39,16 @@ module.exports = {
             PREDICTION_FACTOR: 0.3,     // 预判系数（0.3 = 保守）
             ACCURACY: 0.8,              // 瞄准精度 80%
             SHOW_WARNING: true,         // 射击前显示视觉警告
-            WARNING_DURATION: 200       // 警告持续时间 (ms)
+            WARNING_DURATION: 200,      // 警告持续时间 (ms)
+
+            // 视觉警告效果配置
+            WARNING_VISUALS: {
+                BORDER_WIDTH: 4,        // 边框宽度 (px)
+                BORDER_COLOR: 0xff0000, // 边框颜色（红色）
+                BORDER_PADDING: 3,      // 边框与敌人的间距 (px)
+                SCALE_FACTOR: 1.3,      // 敌人放大倍数
+                BLINK_COUNT: 4          // 闪烁次数
+            }
         },
 
         // 方案2：编队射击（预留）
@@ -129,5 +138,10 @@ module.exports = {
     FIRE_RATE_MULTIPLIER: 0.85, // Enemy fire interval reduction per wave
     MIN_FIRE_INTERVAL: 400,    // Minimum enemy fire interval (ms)
     TRANSITION_DELAY: 2000     // Delay before spawning next wave (ms)
+  },
+
+  // Debug and development tools
+  DEBUG: {
+    ENABLE_GM_TOOLS: true      // Enable GM test button (set to false in production)
   }
 };

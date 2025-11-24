@@ -87,22 +87,43 @@ class BulletManager {
     }
 
     /**
+     * 创建敌人子弹（提取公共逻辑）
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @param {number} vx - X方向速度
+     * @param {number} vy - Y方向速度
+     * @returns {Phaser.Physics.Arcade.Sprite} - 创建的子弹
+     */
+    createEnemyBullet(x, y, vx, vy) {
+        const bullet = this.enemyBullets.create(x, y, 'enemyBullet');
+        bullet.setVelocity(vx, vy);
+        return bullet;
+    }
+
+    /**
      * 显示射击警告效果（敌人变红闪烁）
      * @param {Phaser.GameObjects.Sprite} enemy - 敌人精灵
      * @param {number} duration - 持续时间 (ms)
      */
     showShootWarning(enemy, duration) {
+        const visuals = GameConfig.ENEMY.SHOOTING.AIMED.WARNING_VISUALS;
+
+        // 计算边框尺寸（自适应敌人大小）
+        const padding = visuals.BORDER_PADDING;
+        const size = Math.max(enemy.width, enemy.height) + padding * 2;
+        const halfSize = size / 2;
+
         // 创建红色边框（在敌人周围）
         const warningBox = this.scene.add.graphics();
-        warningBox.lineStyle(4, 0xff0000, 1); // 4px 红色边框
-        warningBox.strokeRect(enemy.x - 20, enemy.y - 20, 40, 40); // 比敌人大一圈
+        warningBox.lineStyle(visuals.BORDER_WIDTH, visuals.BORDER_COLOR, 1);
+        warningBox.strokeRect(enemy.x - halfSize, enemy.y - halfSize, size, size);
 
         // 放大敌人（更明显）
         const originalScale = enemy.scale;
-        enemy.setScale(originalScale * 1.3);
+        enemy.setScale(originalScale * visuals.SCALE_FACTOR);
 
         // 添加快速闪烁效果
-        const blinkCount = 4;
+        const blinkCount = visuals.BLINK_COUNT;
         const blinkInterval = duration / (blinkCount * 2);
 
         let currentBlink = 0;
@@ -117,8 +138,12 @@ class BulletManager {
 
                 // 更新边框位置（敌人可能在移动）
                 warningBox.clear();
-                warningBox.lineStyle(4, 0xff0000, currentBlink % 2 === 0 ? 0.5 : 1); // 闪烁透明度
-                warningBox.strokeRect(enemy.x - 20, enemy.y - 20, 40, 40);
+                warningBox.lineStyle(
+                    visuals.BORDER_WIDTH,
+                    visuals.BORDER_COLOR,
+                    currentBlink % 2 === 0 ? 0.5 : 1  // 闪烁透明度
+                );
+                warningBox.strokeRect(enemy.x - halfSize, enemy.y - halfSize, size, size);
 
                 currentBlink++;
 
@@ -169,18 +194,22 @@ class BulletManager {
         let dx = predictedX - enemyX;
         let dy = player.y - enemyY;
 
-        // 添加精度偏差（80%精度 = ±20%随机偏移）
+        // 计算初始距离，用于按比例添加偏差
+        const initialDistance = Math.sqrt(dx * dx + dy * dy);
+
+        // 添加精度偏差（80%精度 = ±20%随机偏移，按距离比例）
         const inaccuracy = 1 - config.ACCURACY;
-        dx += (Math.random() - 0.5) * inaccuracy * 100;
-        dy += (Math.random() - 0.5) * inaccuracy * 100;
+        const inaccuracyFactor = initialDistance * inaccuracy;
+        dx += (Math.random() - 0.5) * inaccuracyFactor;
+        dy += (Math.random() - 0.5) * inaccuracyFactor;
 
         // 归一化并保持速度恒定
-        const newDistance = Math.sqrt(dx * dx + dy * dy);
+        const finalDistance = Math.sqrt(dx * dx + dy * dy);
         const speed = GameConfig.ENEMY.BULLET_SPEED;
 
         return {
-            vx: (dx / newDistance) * speed,
-            vy: (dy / newDistance) * speed
+            vx: (dx / finalDistance) * speed,
+            vy: (dy / finalDistance) * speed
         };
     }
 
@@ -215,8 +244,7 @@ class BulletManager {
                 player
             );
 
-            const bullet = this.enemyBullets.create(randomEnemy.x, randomEnemy.y + 10, 'enemyBullet');
-            bullet.setVelocity(vx, vy);
+            this.createEnemyBullet(randomEnemy.x, randomEnemy.y + 10, vx, vy);
         });
     }
 
@@ -226,16 +254,15 @@ class BulletManager {
      */
     shootRandom(enemies) {
         const randomEnemy = Phaser.Utils.Array.GetRandom(enemies.children.entries);
-        const bullet = this.enemyBullets.create(randomEnemy.x, randomEnemy.y + 10, 'enemyBullet');
-        bullet.setVelocityY(GameConfig.ENEMY.BULLET_SPEED);
+        this.createEnemyBullet(randomEnemy.x, randomEnemy.y + 10, 0, GameConfig.ENEMY.BULLET_SPEED);
     }
 
     /**
-     * 射击模式路由器（根据配置选择不同的AI方案）
+     * 触发敌人射击（根据配置选择不同的AI方案）
      * @param {Phaser.Physics.Arcade.Group} enemies - 敌人组
      * @param {Phaser.GameObjects.Sprite} player - 玩家对象（用于瞄准）
      */
-    shootRandomEnemy(enemies, player) {
+    triggerEnemyShot(enemies, player) {
         if (enemies.children.entries.length === 0) return;
 
         const mode = GameConfig.ENEMY.SHOOTING.CURRENT_MODE;
