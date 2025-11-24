@@ -34,6 +34,9 @@ class UIManager {
         this.pauseRestartButton = null;
         this.pauseButton = null;
 
+        // GM test button
+        this.gmButton = null;
+
         // Virtual buttons (mobile only)
         this.virtualButtons = {
             left: null,
@@ -152,6 +155,21 @@ class UIManager {
                 width: 60,
                 height: 40,
                 fontSize: '20px'
+            }
+        );
+
+        // GM test button (below pause button)
+        this.gmButton = this.createButton(
+            this.scene.cameras.main.width - 80,
+            95,
+            'GM',
+            null, // Callback will be set externally
+            {
+                width: 60,
+                height: 40,
+                fontSize: '18px',
+                bgColor: 0xff0000,
+                bgAlpha: 0.8
             }
         );
 
@@ -426,6 +444,14 @@ class UIManager {
      */
     getPauseButton() {
         return this.pauseButton;
+    }
+
+    /**
+     * Get GM test button (for external callback registration)
+     * @returns {Phaser.GameObjects.Container}
+     */
+    getGMButton() {
+        return this.gmButton;
     }
 
     /**

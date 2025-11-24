@@ -68,10 +68,23 @@ class GameScene extends Phaser.Scene {
             this.togglePause();
         });
 
+        // Register GM test button callback
+        const gmButton = this.uiManager.getGMButton();
+        gmButton.removeAllListeners('pointerup');
+        gmButton.on('pointerup', () => {
+            gmButton.setScale(1);
+            if (!this.gameOver && !this.isPaused) {
+                this.killAllEnemies();
+            }
+        });
+
+        // 同步当前波次到 BulletManager（影响瞄准概率）
+        this.bulletManager.setCurrentWave(this.currentWave);
+
         // 敌人射击定时器
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });
@@ -223,12 +236,32 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * GM 测试功能：一键击杀当前波次所有敌人
+     */
+    killAllEnemies() {
+        const enemies = this.enemies.getChildren();
+        enemies.forEach(enemy => {
+            // 使用闪烁效果
+            this.effectsManager.blinkSprite(enemy, () => {
+                enemy.destroy();
+            });
+            // 增加分数
+            this.updateScore(GameConfig.GAME.POINTS_PER_ENEMY);
+        });
+    }
+
     endGame() {
         this.gameOver = true;
         this.physics.pause();
 
         // 停止背景音乐
         this.audioManager.stopBackgroundMusic();
+
+        // 停止敌人射击定时器
+        if (this.enemyFireTimer) {
+            this.enemyFireTimer.paused = true;
+        }
 
         // 清理玩家效果
         this.effectsManager.stopPlayerEffects();
@@ -286,6 +319,9 @@ class GameScene extends Phaser.Scene {
         // 更新 UI
         this.uiManager.updateWave(this.currentWave, GameConfig.WAVE.MAX_WAVE);
 
+        // 同步波次到 BulletManager（影响瞄准概率）
+        this.bulletManager.setCurrentWave(this.currentWave);
+
         // 计算新的敌人射击间隔（逐波递减）
         const baseInterval = GameConfig.ENEMY.FIRE_INTERVAL;
         const newInterval = Math.max(
@@ -299,7 +335,7 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: newInterval,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });
@@ -335,13 +371,16 @@ class GameScene extends Phaser.Scene {
         this.currentWave = GameConfig.WAVE.INITIAL_WAVE;
         this.uiManager.updateWave(this.currentWave, GameConfig.WAVE.MAX_WAVE);
 
+        // 同步波次到 BulletManager（重置为 Wave 1）
+        this.bulletManager.setCurrentWave(this.currentWave);
+
         // 重置射击间隔为初始值
         if (this.enemyFireTimer) {
             this.enemyFireTimer.remove();
         }
         this.enemyFireTimer = this.time.addEvent({
             delay: GameConfig.ENEMY.FIRE_INTERVAL,
-            callback: () => this.bulletManager.shootRandomEnemy(this.enemies),
+            callback: () => this.bulletManager.shootRandomEnemy(this.enemies, this.player),
             callbackScope: this,
             loop: true
         });

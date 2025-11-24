@@ -24,7 +24,38 @@ module.exports = {
     SPEED_MIN: -50,       // Minimum horizontal velocity (px/s)
     SPEED_MAX: 50,        // Maximum horizontal velocity (px/s)
     BULLET_SPEED: 200,    // Downward velocity of enemy bullets (px/s)
-    FIRE_INTERVAL: 1000   // Interval between enemy shots (ms)
+    FIRE_INTERVAL: 1000,  // Interval between enemy shots (ms)
+
+    // 射击系统（模块化配置，支持多种AI方案切换）
+    SHOOTING: {
+        CURRENT_MODE: 'AIMED',  // 'RANDOM' | 'AIMED' | 'FORMATION' | 'POSITIONING'
+
+        // 方案1：预测性射击
+        AIMED: {
+            ENABLED: true,              // 启用瞄准射击
+            START_WAVE: 2,              // 从 Wave 2 开始启用
+            BASE_PROBABILITY: 0.3,      // Wave 2 初始瞄准概率 30%
+            PROBABILITY_INCREMENT: 0.15, // 每波增加 15% 瞄准概率
+            PREDICTION_FACTOR: 0.3,     // 预判系数（0.3 = 保守）
+            ACCURACY: 0.8,              // 瞄准精度 80%
+            SHOW_WARNING: true,         // 射击前显示视觉警告
+            WARNING_DURATION: 200       // 警告持续时间 (ms)
+        },
+
+        // 方案2：编队射击（预留）
+        FORMATION: {
+            ENABLED: false,                // 暂未实现
+            COLUMN_SALVO_PROBABILITY: 0.3, // 纵列齐射概率
+            FAN_PATTERN_ANGLES: [-15, 0, 15] // 扇形弹幕角度
+        },
+
+        // 方案3：智能站位（预留）
+        POSITIONING: {
+            ENABLED: false,     // 暂未实现
+            START_WAVE: 3,      // 从第3波开始
+            STRATEGY: 'SPREAD'  // 'SPREAD'(分散) | 'CLUSTER'(聚集)
+        }
+    }
   },
 
   // Enemy spawn formation layout
