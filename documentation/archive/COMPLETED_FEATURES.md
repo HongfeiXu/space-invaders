@@ -2,7 +2,7 @@
 
 Space Invaders 游戏已实现的所有功能列表。
 
-*最后更新: 2025-11-17*
+*最后更新: 2025-11-24*
 
 ---
 
@@ -36,9 +36,52 @@ Space Invaders 游戏已实现的所有功能列表。
 **会话**: 会话 3
 **实现方式**: 5 波循环系统，胜利后保留进度继续游玩
 
-### 2.3 敌人 AI 优化 ❌ 待实现
-**状态**: ❌ 待实现
-**计划**: 目标导向射击，增加游戏挑战性
+### 2.3 敌人 AI 优化 → 方案1：预测性射击 ✅
+**状态**: ✅ 已完成
+**会话**: 会话 6
+**提交**: ba999f4
+**实现日期**: 2025-11-24
+
+**核心功能**:
+- 模块化射击系统架构（支持方案1/2/3切换）
+- Wave 1：保留随机直线射击（新手引导）
+- Wave 2-5：启用瞄准射击，渐进难度递增
+  - Wave 2：30% 瞄准概率
+  - Wave 3：45% 瞄准概率
+  - Wave 4：60% 瞄准概率
+  - Wave 5：75% 瞄准概率
+- 预判系统：考虑玩家移动速度（0.3系数）
+- 瞄准精度：80%（保留20%偏差）
+- 视觉警告：红色边框 + 敌人放大（200ms）
+
+**技术实现**:
+- 射击模式路由器（`GameConfig.ENEMY.SHOOTING.CURRENT_MODE`）
+- 波次同步机制（GameScene ↔ BulletManager）
+- 配置驱动设计（所有参数可调）
+
+**测试功能**:
+- GM 按钮（右上角红色按钮）
+- 一键击杀当前波次所有敌人
+- 快速测试各波次瞄准效果
+
+**Bug 修复**:
+- 游戏结束时停止敌人射击定时器
+
+**配置切换**:
+```javascript
+GameConfig.ENEMY.SHOOTING.CURRENT_MODE = 'AIMED'  // 当前（方案1）
+GameConfig.ENEMY.SHOOTING.CURRENT_MODE = 'RANDOM' // 回退原始
+GameConfig.ENEMY.SHOOTING.CURRENT_MODE = 'FORMATION' // 方案2（待实现）
+GameConfig.ENEMY.SHOOTING.CURRENT_MODE = 'POSITIONING' // 方案3（待实现）
+```
+
+**文件修改**:
+- `src/config/GameConfig.js` (+33行) - 模块化配置
+- `src/managers/BulletManager.js` (+185行) - 核心逻辑
+- `src/managers/UIManager.js` (+26行) - GM按钮
+- `src/scenes/GameScene.js` (+45行) - 调用适配
+
+**参考文档**: `documentation/memos/ai-design.md`
 
 ---
 
@@ -193,6 +236,7 @@ Space Invaders 游戏已实现的所有功能列表。
 | 4 | UI 完善 | 600 → 500 | WASD、暂停菜单 |
 | 4.5 | 玩家反馈 | 500 → 450 | 被击中反馈、高分修复 |
 | 5 | 移动端适配 | 450 → 393 | 虚拟按钮、触摸、响应式 |
+| 6 | AI 方案1 | 393 → 674 | 预测射击、GM按钮 |
 
 ---
 
