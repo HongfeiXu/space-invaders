@@ -26,14 +26,16 @@ const MenuConfig = {
 
     BUTTON_WIDTH: 180,
     BUTTON_HEIGHT: 50,
-    BUTTON_SPACING: 70,
+    BUTTON_SPACING: 15,  // 按钮之间的间距
     BUTTON_FONT_SIZE: '24px',
     BUTTON_COLOR: '#4CAF50',
     BUTTON_TEXT_COLOR: '#fff',
 
     // 按钮位置（相对于菜单中心）
-    RESUME_Y: 0,
-    RESTART_Y: 40
+    TITLE_Y: -120,      // 标题位置
+    RESUME_Y: 0,        // 第一个按钮
+    RESTART_Y: 65,      // 第二个按钮 (50高度 + 15间距)
+    MAINMENU_Y: 130     // 第三个按钮 (50高度 + 15间距)
   },
 
   // ==================== 游戏结束菜单配置 ====================
@@ -125,6 +127,26 @@ const MenuConfig = {
     BUTTON_HEIGHT: 50,
     BUTTON_FONT_SIZE: '24px',
     BUTTON_COLOR: '#4CAF50'
+  },
+
+  // ==================== 确认对话框配置 ====================
+  CONFIRM_MENU: {
+    MESSAGE_FONT_SIZE: '24px',
+    MESSAGE_COLOR: '#fff',
+
+    BUTTON_WIDTH: 120,
+    BUTTON_HEIGHT: 50,
+    BUTTON_FONT_SIZE: '22px',
+    BUTTON_SPACING: 30,
+
+    CONFIRM_BUTTON_COLOR: '#FF6B6B',
+    CANCEL_BUTTON_COLOR: '#4CAF50',
+    BUTTON_TEXT_COLOR: '#fff',
+
+    // 元素位置（相对于菜单中心）
+    MESSAGE_Y: -40,
+    CONFIRM_Y: 50,
+    CANCEL_Y: 50
   }
 };
 

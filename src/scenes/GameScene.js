@@ -105,7 +105,24 @@ class GameScene extends Phaser.Scene {
             this.physics.pause();
             this.uiManager.showPauseMenu(
                 () => this.togglePause(),  // Resume callback
-                () => this.scene.restart()  // Restart callback
+                () => this.scene.restart(),  // Restart callback
+                () => {  // Main Menu callback
+                    // 显示确认对话框
+                    this.uiManager.menuManager.showMenu('confirm', {
+                        message: '返回主菜单？\n当前进度将丢失',
+                        onConfirm: () => {
+                            this.uiManager.menuManager.hideMenu('confirm');
+                            this.uiManager.menuManager.hideMenu('pause');
+                            // 停止背景音乐
+                            this.audioManager.stopBackgroundMusic();
+                            // 返回主菜单
+                            this.scene.start('MenuScene');
+                        },
+                        onCancel: () => {
+                            this.uiManager.menuManager.hideMenu('confirm');
+                        }
+                    });
+                }
             );
             // 暂停背景音乐
             this.audioManager.pauseBackgroundMusic();
@@ -277,8 +294,12 @@ class GameScene extends Phaser.Scene {
         const highScore = this.scoreManager.getHighScore();
         const isNewRecord = this.scoreManager.shouldShowNewRecordAnimation();
 
-        // 显示游戏结束界面
-        this.uiManager.showGameOver(currentScore, highScore, isNewRecord, () => this.scene.restart());
+        // 启动游戏结束场景
+        this.scene.start('GameOverScene', {
+            score: currentScore,
+            highScore: highScore,
+            isNewRecord: isNewRecord
+        });
     }
 
     // ==================== UI系统 ====================

@@ -1,5 +1,7 @@
 const Phaser = require('phaser');
+const MenuScene = require('./scenes/MenuScene');
 const GameScene = require('./scenes/GameScene');
+const GameOverScene = require('./scenes/GameOverScene');
 
 // 创建简单图形的预加载场景
 class PreloadScene extends Phaser.Scene {
@@ -47,8 +49,8 @@ class PreloadScene extends Phaser.Scene {
         enemyBulletGraphics.generateTexture('enemyBullet', 6, 15);
         enemyBulletGraphics.destroy();
 
-        // 启动游戏场景
-        this.scene.start('GameScene');
+        // 启动主菜单场景
+        this.scene.start('MenuScene');
     }
 }
 
@@ -67,7 +69,7 @@ const config = {
             debug: false
         }
     },
-    scene: [PreloadScene, GameScene],
+    scene: [PreloadScene, MenuScene, GameScene, GameOverScene],
     parent: 'game',
     backgroundColor: '#000'
 };

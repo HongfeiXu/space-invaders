@@ -12,7 +12,8 @@
       "Bash(test:*)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Skill(git-commit-helper)"
     ],
     "deny": [],
     "ask": []

@@ -425,11 +425,13 @@ class UIManager {
      * Show pause menu (delegated to MenuManager)
      * @param {Function} onResume - Resume callback
      * @param {Function} onRestart - Restart callback
+     * @param {Function} onMainMenu - Main menu callback
      */
-    showPauseMenu(onResume, onRestart) {
+    showPauseMenu(onResume, onRestart, onMainMenu) {
         this.menuManager.showMenu('pause', {
             onResume: onResume,
-            onRestart: onRestart
+            onRestart: onRestart,
+            onMainMenu: onMainMenu
         });
     }
 

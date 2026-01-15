@@ -164,15 +164,21 @@ class MenuManager {
      * @returns {object} { overlay, container }
      */
     createMenuUI(menuName, menuConfig) {
-      // 创建背景遮罩（depth=90）
-      const overlay = this.createOverlay();
+      // 计算动态 depth（每层菜单 +20，确保上层菜单覆盖下层）
+      const stackLevel = this.menuStack.length;
+      const depthOffset = stackLevel * 20;
+      const overlayDepth = this.overlayDepth + depthOffset;
+      const menuDepth = this.menuDepth + depthOffset;
 
-      // 创建菜单容器（depth=100）
+      // 创建背景遮罩
+      const overlay = this.createOverlay(overlayDepth);
+
+      // 创建菜单容器
       const container = this.scene.add.container(
         this.scene.cameras.main.width / 2,
         this.scene.cameras.main.height / 2
       );
-      container.setDepth(this.menuDepth);
+      container.setDepth(menuDepth);
 
       // 创建菜单内容
       this.createMenuContent(menuName, menuConfig, container);
@@ -187,12 +193,12 @@ class MenuManager {
     /**
      * 创建背景遮罩
      * @private
+     * @param {number} depth - 遮罩的 depth 值
      * @returns {Phaser.GameObjects.Rectangle}
      */
-    createOverlay() {
+    createOverlay(depth) {
       const MenuConfig = require('../config/MenuConfig');
       const overlayConfig = MenuConfig.OVERLAY;
-      const depthConfig = MenuConfig.DEPTH;
 
       const overlay = this.scene.add.rectangle(
         this.scene.cameras.main.width / 2,
@@ -206,7 +212,7 @@ class MenuManager {
       if (overlayConfig.INTERACTIVE) {
         overlay.setInteractive();  // 阻止鼠标穿透到背后
       }
-      overlay.setDepth(depthConfig.OVERLAY);
+      overlay.setDepth(depth);
 
       return overlay;
     }
@@ -226,6 +232,8 @@ class MenuManager {
           return this.createGameOverMenuContent(container, menuConfig);
         case 'victory':
           return this.createVictoryMenuContent(container, menuConfig);
+        case 'confirm':    // 确认对话框
+          return this.createConfirmMenuContent(container, menuConfig);
         case 'upgrade':    // 预留扩展
           return this.createUpgradeMenuContent(container, menuConfig);
         case 'main':       // 预留扩展
@@ -249,7 +257,7 @@ class MenuManager {
       // 创建标题
       const title = this.scene.add.text(
         0,
-        -100,
+        pauseConfig.TITLE_Y,
         pauseConfig.TITLE,
         {
           fontSize: pauseConfig.TITLE_FONT_SIZE,
@@ -291,6 +299,22 @@ class MenuManager {
         }
       );
       container.add(restartBtn);
+
+      // 创建 Main Menu 按钮
+      const mainMenuBtn = this.createButton(
+        0,
+        pauseConfig.MAINMENU_Y,
+        'Main Menu',
+        config.onMainMenu,
+        {
+          width: pauseConfig.BUTTON_WIDTH,
+          height: pauseConfig.BUTTON_HEIGHT,
+          fontSize: pauseConfig.BUTTON_FONT_SIZE,
+          fillColor: '#FFA500',
+          textColor: pauseConfig.BUTTON_TEXT_COLOR
+        }
+      );
+      container.add(mainMenuBtn);
 
       return container;
     }
@@ -404,6 +428,70 @@ class MenuManager {
         }
       ).setOrigin(0.5);
       container.add(hint);
+
+      return container;
+    }
+
+    /**
+     * 创建确认对话框内容
+     * @private
+     * @param {Phaser.GameObjects.Container} container - 菜单容器
+     * @param {object} config - 配置对象 { message, onConfirm, onCancel }
+     * @returns {Phaser.GameObjects.Container} 更新后的容器
+     */
+    createConfirmMenuContent(container, config) {
+      const MenuConfig = require('../config/MenuConfig');
+      const confirmConfig = MenuConfig.CONFIRM_MENU;
+
+      // 创建消息文本
+      const messageText = this.scene.add.text(
+        0,
+        confirmConfig.MESSAGE_Y,
+        config.message || '确认操作？',
+        {
+          fontSize: confirmConfig.MESSAGE_FONT_SIZE,
+          fill: confirmConfig.MESSAGE_COLOR,
+          align: 'center'
+        }
+      ).setOrigin(0.5);
+      container.add(messageText);
+
+      // 计算按钮X位置（左右并排）
+      const buttonSpacing = confirmConfig.BUTTON_WIDTH + confirmConfig.BUTTON_SPACING;
+      const confirmX = -buttonSpacing / 2 + confirmConfig.BUTTON_WIDTH / 2;
+      const cancelX = buttonSpacing / 2 - confirmConfig.BUTTON_WIDTH / 2;
+
+      // 创建确认按钮
+      const confirmBtn = this.createButton(
+        confirmX,
+        confirmConfig.CONFIRM_Y,
+        '确认',
+        config.onConfirm,
+        {
+          width: confirmConfig.BUTTON_WIDTH,
+          height: confirmConfig.BUTTON_HEIGHT,
+          fontSize: confirmConfig.BUTTON_FONT_SIZE,
+          fillColor: confirmConfig.CONFIRM_BUTTON_COLOR,
+          textColor: confirmConfig.BUTTON_TEXT_COLOR
+        }
+      );
+      container.add(confirmBtn);
+
+      // 创建取消按钮
+      const cancelBtn = this.createButton(
+        cancelX,
+        confirmConfig.CANCEL_Y,
+        '取消',
+        config.onCancel,
+        {
+          width: confirmConfig.BUTTON_WIDTH,
+          height: confirmConfig.BUTTON_HEIGHT,
+          fontSize: confirmConfig.BUTTON_FONT_SIZE,
+          fillColor: confirmConfig.CANCEL_BUTTON_COLOR,
+          textColor: confirmConfig.BUTTON_TEXT_COLOR
+        }
+      );
+      container.add(cancelBtn);
 
       return container;
     }
